@@ -1,0 +1,26 @@
+.section { padding-top: 5rem; padding-bottom: 5rem; background-color: white; }
+.container { max-width: 80rem; margin: 0 auto; padding: 0 1rem; }
+.header { max-width: 48rem; margin: 0 auto 4rem; text-align: center; }
+.sectionTitle { font-size: 1.875rem; font-weight: 700; letter-spacing: -0.025em; color: #111418; }
+.subtitle { margin-top: 1rem; font-size: 1.125rem; color: rgba(0, 0, 0, 0.6); }
+.grid { display: grid; gap: 2rem; }
+.card {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  background-color: #f5f7f8;
+  border-radius: 0.75rem;
+}
+.quote { flex-grow: 1; color: rgba(0, 0, 0, 0.8); }
+.authorInfo { margin-top: 1.5rem; display: flex; align-items: center; gap: 1rem; }
+.avatar { height: 3rem; width: 3rem; border-radius: 9999px; object-fit: cover; }
+.name { font-weight: 700; }
+.title { font-size: 0.875rem; color: rgba(0, 0, 0, 0.6); }
+
+@media (min-width: 640px) {
+  .section { padding-top: 7rem; padding-bottom: 7rem; }
+  .sectionTitle { font-size: 2.25rem; }
+}
+@media (min-width: 768px) {
+  .grid { grid-template-columns: repeat(3, 1fr); }
+}

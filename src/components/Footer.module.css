@@ -1,0 +1,49 @@
+.footer { padding: 3rem 0; background-color: #f5f7f8; }
+.container { max-width: 80rem; margin: 0 auto; padding: 0 1rem; text-align: center; }
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+.logoLink {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: #111418;
+}
+.logoIconWrapper {
+  display: flex;
+  height: 2.5rem;
+  width: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background-color: #3b83f7;
+  color: white;
+}
+.icon {
+  height: 1.5rem;
+  width: 1.5rem;
+}
+.logoText { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.025em; }
+.navigation { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; }
+.navLink {
+  font-size: 0.875rem;
+  color: rgba(0, 0, 0, 0.6);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.navLink:hover { color: #3b83f7; }
+.copyright { margin-top: 2rem; font-size: 0.875rem; color: rgba(0, 0, 0, 0.6); }
+
+@media (min-width: 640px) {
+  .content {
+    flex-direction: row;
+  }
+  .navigation {
+    gap: 1.5rem;
+  }
+}
