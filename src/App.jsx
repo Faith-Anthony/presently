@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import DashboardPage from './pages/DashboardPage'; 
 import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // A placeholder for a future authenticated page

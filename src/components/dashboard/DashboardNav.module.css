@@ -1,0 +1,67 @@
+.navContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 250px;
+  background-color: white;
+  border-right: 1px solid #e5e7eb;
+  padding: 1.5rem;
+  flex-shrink: 0;
+}
+
+.logoWrapper {
+  margin-bottom: 2rem;
+}
+
+.navList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.navLink {
+  display: block;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  color: #374151;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.navLink:hover {
+  background-color: #f3f4f6;
+}
+
+.navLink.active {
+  background-color: #3b83f7;
+  color: white;
+}
+
+.logoutButton {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 0.5rem;
+  background-color: #f3f4f6;
+  color: #374151;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+}
+
+.logoutButton:hover {
+  background-color: #ef4444;
+  color: white;
+}
+
+/* On screens smaller than 1024px, hide the sidebar */
+@media (max-width: 1023px) {
+  .navContainer {
+    display: none;
+  }
+}
