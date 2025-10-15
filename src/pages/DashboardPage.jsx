@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { db } from '../firebase/config';
+import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import styles from './DashboardPage.module.css';
+import { Link } from 'react-router-dom';
 
 import DashboardNav from '../components/dashboard/DashboardNav';
 import DashboardHeader from '../components/dashboard/DashboardHeader';
@@ -10,37 +13,64 @@ import ScrollAnimationWrapper from '../components/ScrollAnimationWrapper';
 
 const DashboardPage = () => {
   const { currentUser } = useAuth();
+  const [wishlists, setWishlists] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Placeholder data for the user's plan and wishlists
-  const userPlan = 'Free'; // This could come from your user data in the future
-  const wishlists = [
-    { id: 1, title: "My 30th Birthday", date: "2025-11-20", itemCount: 12 },
-    { id: 2, title: "Wedding Registry", date: "2026-06-15", itemCount: 78 },
-    { id: 3, title: "Baby Shower Wishlist", date: "2025-12-05", itemCount: 45 },
-  ];
+  useEffect(() => {
+    if (!currentUser) return;
 
-  // A placeholder name. You would get this from the currentUser object.
+    const wishlistsRef = collection(db, 'wishlists');
+    const q = query(
+      wishlistsRef,
+      where("userId", "==", currentUser.uid),
+      orderBy("createdAt", "desc")
+    );
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const userWishlists = [];
+      querySnapshot.forEach((doc) => {
+        userWishlists.push({ id: doc.id, ...doc.data() });
+      });
+      setWishlists(userWishlists);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [currentUser]);
+
   const userName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User';
+
+  // Check if the user can create more wishlists (limit is 2 for free plan)
+  const canCreateMore = wishlists.length < 2;
 
   return (
     <div className={styles.dashboardContainer}>
       <DashboardNav />
       <main className={styles.mainContent}>
-        <DashboardHeader userName={userName} />
+        {/* Pass the result of our check to the header component */}
+        <DashboardHeader userName={userName} canCreate={canCreateMore} />
 
-        {userPlan === 'Free' && (
-          <ScrollAnimationWrapper>
-            <UpgradePrompt />
-          </ScrollAnimationWrapper>
+        <ScrollAnimationWrapper>
+          <UpgradePrompt />
+        </ScrollAnimationWrapper>
+        
+        {loading ? (
+          <p>Loading your wishlists...</p>
+        ) : wishlists.length === 0 ? (
+          <div className={styles.noWishlists}>
+            <h3>No wishlists yet!</h3>
+            <p>Get started by creating your first one.</p>
+            <Link to="/create-wishlist" className={styles.createButtonLink}>Create a Wishlist</Link>
+          </div>
+        ) : (
+          <div className={styles.wishlistGrid}>
+            {wishlists.map(wishlist => (
+              <ScrollAnimationWrapper key={wishlist.id}>
+                <WishlistCard wishlist={wishlist} />
+              </ScrollAnimationWrapper>
+            ))}
+          </div>
         )}
-
-        <div className={styles.wishlistGrid}>
-          {wishlists.map(wishlist => (
-            <ScrollAnimationWrapper key={wishlist.id}>
-              <WishlistCard wishlist={wishlist} />
-            </ScrollAnimationWrapper>
-          ))}
-        </div>
       </main>
     </div>
   );

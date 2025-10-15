@@ -1,22 +1,32 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import styles from './WishlistCard.module.css';
+import toast from 'react-hot-toast';
 
 const WishlistCard = ({ wishlist }) => {
-  const { title, date, itemCount } = wishlist;
+  const { id, name, eventDate, itemCount } = wishlist || {};
 
-  const formattedDate = new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  const formattedDate = eventDate && typeof eventDate.toDate === 'function' 
+    ? eventDate.toDate().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    : 'No date set';
+
+  const handleShare = () => {
+    const shareUrl = `${window.location.origin}/wishlist/${id}`;
+    navigator.clipboard.writeText(shareUrl);
+    toast.success('Link copied to clipboard!');
+  };
 
   return (
     <div className={styles.card}>
-      <h3 className={styles.title}>{title}</h3>
+      <h3 className={styles.title}>{name || 'Untitled Wishlist'}</h3>
       <p className={styles.date}>{formattedDate}</p>
       <div className={styles.footer}>
-        <span className={styles.itemCount}>{itemCount} items</span>
-        <a href="#" className={styles.viewLink}>View</a>
+        <span className={styles.itemCount}>{itemCount || 0} items</span>
+        <div className={styles.buttonGroup}>
+          <button onClick={handleShare} className={styles.actionButton}>Share</button>
+          <Link to={`/wishlist/${id}/manage`} className={styles.actionButton}>Manage</Link>
+          <Link to={`/wishlist/${id}`} className={styles.viewLink}>View</Link>
+        </div>
       </div>
     </div>
   );

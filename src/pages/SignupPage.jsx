@@ -4,7 +4,8 @@ import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } f
 import { auth } from '../firebase/config';
 import toast from 'react-hot-toast';
 import styles from './Auth.module.css';
-import Logo from '../components/Logo'; // Import the Logo component
+import Logo from '../components/Logo';
+import { checkIfUserHasWishlists } from '../firebase/services'; // Import the helper function
 
 const SignupPage = () => {
   const [email, setEmail] = useState('');
@@ -12,16 +13,25 @@ const SignupPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const navigate = useNavigate();
 
+  const handleSuccessfulLogin = async (user) => {
+    if (!user) return;
+    const hasWishlists = await checkIfUserHasWishlists(user.uid);
+    if (hasWishlists) {
+      navigate('/dashboard');
+    } else {
+      navigate('/create-wishlist');
+    }
+  };
+
   const handleSignup = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match!");
-      return;
+      return toast.error("Passwords do not match!");
     }
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       toast.success('Account created successfully!');
-      navigate('/'); // Redirect to homepage after signup
+      await handleSuccessfulLogin(userCredential.user);
     } catch (error) {
       toast.error(error.message);
     }
@@ -30,9 +40,9 @@ const SignupPage = () => {
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
       toast.success('Signed in with Google successfully!');
-      navigate('/');
+      await handleSuccessfulLogin(result.user);
     } catch (error) {
       toast.error(error.message);
     }

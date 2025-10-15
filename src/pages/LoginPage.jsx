@@ -4,19 +4,30 @@ import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 
 import { auth } from '../firebase/config';
 import toast from 'react-hot-toast';
 import styles from './Auth.module.css';
-import Logo from '../components/Logo'; // Import the Logo component
+import Logo from '../components/Logo';
+import { checkIfUserHasWishlists } from '../firebase/services'; // Import the helper function
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
 
+  const handleSuccessfulLogin = async (user) => {
+    if (!user) return;
+    const hasWishlists = await checkIfUserHasWishlists(user.uid);
+    if (hasWishlists) {
+      navigate('/dashboard');
+    } else {
+      navigate('/create-wishlist');
+    }
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       toast.success('Logged in successfully!');
-      navigate('/'); // Redirect to homepage
+      await handleSuccessfulLogin(userCredential.user);
     } catch (error) {
       toast.error(error.message);
     }
@@ -25,9 +36,9 @@ const LoginPage = () => {
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, provider);
       toast.success('Signed in with Google successfully!');
-      navigate('/');
+      await handleSuccessfulLogin(result.user);
     } catch (error) {
       toast.error(error.message);
     }

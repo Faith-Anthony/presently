@@ -35,3 +35,37 @@
     grid-template-columns: repeat(3, 1fr); /* 3 columns on desktops */
   }
 }
+
+/* Add these styles to your existing DashboardPage.module.css file */
+.noWishlists {
+  margin-top: 3rem;
+  text-align: center;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 0.75rem;
+}
+
+.noWishlists h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.noWishlists p {
+  color: #6b7280;
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.createButtonLink {
+  padding: 0.75rem 1.5rem;
+  background-color: #3b73f7;
+  color: white;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.createButtonLink:hover {
+  background-color: #2563eb;
+}

@@ -34,3 +34,14 @@
     align-items: center;
   }
 }
+
+
+.createButtonDisabled {
+  padding: 0.75rem 1.5rem;
+  background-color: #9ca3af; /* Gray color */
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: not-allowed; /* Show disabled cursor */
+}

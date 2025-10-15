@@ -1,0 +1,29 @@
+.card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+}
+
+.itemName {
+  font-weight: 500;
+  color: #111418;
+  word-break: break-word;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.deleteButton {
+  background: none;
+  border: none;
+  color: #ef4444; /* Red color */
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem;
+}
