@@ -7,19 +7,34 @@ const CheckIcon = () => (
   </svg>
 );
 
+const formatPrice = (price, currency = 'USD') => {
+  if (!price || isNaN(price)) return null;
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(price);
+};
+
 const WishlistItem = ({ item, onPick }) => {
-  const { id, name, imageUrl, status } = item;
+  const { id, name, description, price, currency, vendorLink, imageUrl, status } = item;
+  const displayPrice = formatPrice(price, currency);
 
   return (
     <div className={styles.card}>
-      <div className={styles.imageContainer}>
-        <img src={imageUrl} alt={name} className={styles.image} />
-      </div>
+      {imageUrl && (
+        <div className={styles.imageContainer}>
+          <img src={imageUrl} alt={name} className={styles.image} />
+        </div>
+      )}
       <div className={styles.content}>
         <h4 className={styles.itemName}>{name}</h4>
+        {description && <p className={styles.itemDescription}>{description}</p>}
+        
+        <div className={styles.details}>
+          {displayPrice && <span className={styles.price}>{displayPrice}</span>}
+          {vendorLink && <a href={vendorLink} target="_blank" rel="noopener noreferrer" className={styles.vendorLink}>View Store</a>}
+        </div>
+
         {status === 'unpicked' ? (
-          <button onClick={() => onPick(id)} className={styles.pickButton}>
-            Pick this item
+          <button onClick={() => onPick(item)} className={styles.pickButton}>
+            Pick this gift
           </button>
         ) : (
           <div className={styles.pickedStatus}>

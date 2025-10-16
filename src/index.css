@@ -1,3 +1,15 @@
-@tailwind base;
+/* @tailwind base;
 @tailwind components;
-@tailwind utilities;
+@tailwind utilities; */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #f5f7f8;
+  background-image: linear-gradient(170deg, #f5f9ff 0%, #f5f7f8 100%);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

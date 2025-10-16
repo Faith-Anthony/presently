@@ -8,54 +8,58 @@ import styles from './CreateWishlistPage.module.css';
 import Logo from '../components/Logo';
 import Modal from '../components/UI/Modal';
 
+const SuccessModal = ({ isOpen, onClose, onShare }) => (
+  <Modal isOpen={isOpen} onClose={onClose}>
+    <div className={styles.modalContent}>
+      <span className={styles.celebrateEmoji}>👏</span>
+      <h3>Wishlist Created!</h3>
+      <p>Your wishlist and items have been saved. You can now share the link with friends and family.</p>
+      <div className={styles.successButtons}>
+        <button onClick={onShare} className={styles.modalButton}>Copy Share Link</button>
+        <button onClick={onClose} className={styles.secondaryButton}>Go to Dashboard</button>
+      </div>
+    </div>
+  </Modal>
+);
+
 const CreateWishlistPage = () => {
-  // State for Step 1: Create Wishlist
+  // Step 1 State
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [eventDate, setEventDate] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // State for Step 2: Add Items
-  const [formStep, setFormStep] = useState('create'); // 'create' or 'addItems'
+  // Step 2 State
+  const [formStep, setFormStep] = useState('create');
   const [newWishlistId, setNewWishlistId] = useState(null);
   const [items, setItems] = useState(
-    Array(5).fill({ name: '', description: '', quantity: 1, price: '', vendorLink: '', imageUrl: '' })
+    Array(5).fill({ name: '', description: '', quantity: 1, price: '', currency: 'USD', vendorLink: '', imageUrl: '' })
   );
-
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
   const handleCreateWishlist = async (e) => {
     e.preventDefault();
-    if (!name || !eventDate) {
-      return toast.error('Please fill out the wishlist name and event date.');
-    }
     setLoading(true);
     try {
       const docRef = await addDoc(collection(db, 'wishlists'), {
-        userId: currentUser.uid,
-        name,
-        description,
-        eventDate: new Date(eventDate),
-        itemCount: 0,
+        userId: currentUser.uid, name, description,
+        eventDate: new Date(eventDate), itemCount: 0,
         createdAt: serverTimestamp(),
       });
       setNewWishlistId(docRef.id);
       setIsModalOpen(true);
-    } catch (error) {
-      toast.error('Failed to create wishlist.');
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+    } catch (error) { toast.error('Failed to create wishlist.'); }
+    finally { setLoading(false); }
   };
 
   const handleModalClose = () => {
     setIsModalOpen(false);
-    setFormStep('addItems'); // Move to the "Add Items" form
+    setFormStep('addItems');
   };
-  
+
   const handleItemChange = (index, field, value) => {
     if (field === 'name' && value.includes(',')) {
       toast.error("Please enter only one item name per field.");
@@ -72,9 +76,8 @@ const CreateWishlistPage = () => {
     const itemsToAdd = items.filter(item => item.name.trim() !== '');
 
     if (itemsToAdd.length === 0) {
-      toast.success("Wishlist created! You can add items later from your dashboard.");
-      navigate('/dashboard');
-      return;
+      toast.success("Wishlist created! You can add items later.");
+      navigate('/dashboard'); return;
     }
 
     try {
@@ -91,6 +94,7 @@ const CreateWishlistPage = () => {
           description: item.description || '',
           quantity: Number(item.quantity) || 1,
           price: Number(item.price) || 0,
+          currency: item.currency || 'USD',
           vendorLink: item.vendorLink || '',
           imageUrl: item.imageUrl || '',
           status: 'unpicked',
@@ -99,14 +103,18 @@ const CreateWishlistPage = () => {
       });
 
       await batch.commit();
-      toast.success('Items added successfully!');
-      navigate('/dashboard');
+      setIsSuccessModalOpen(true);
     } catch (error) {
       toast.error('Failed to add items.');
-      console.error(error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleShare = () => {
+    const shareUrl = `${window.location.origin}/wishlist/${newWishlistId}`;
+    navigator.clipboard.writeText(shareUrl);
+    toast.success('Link copied to clipboard!');
   };
 
   return (
@@ -119,6 +127,12 @@ const CreateWishlistPage = () => {
         </div>
       </Modal>
 
+      <SuccessModal 
+        isOpen={isSuccessModalOpen}
+        onClose={() => navigate('/dashboard')}
+        onShare={handleShare}
+      />
+
       <div className={styles.pageContainer}>
         <div className={styles.logoWrapper}> <Logo /> </div>
         <div className={styles.formCard}>
@@ -127,21 +141,10 @@ const CreateWishlistPage = () => {
               <h2>Create a new wishlist</h2>
               <p>Let's get started with the details for your special event.</p>
               <form onSubmit={handleCreateWishlist} className={styles.form}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="wishlist-name">Wishlist name</label>
-                  <input id="wishlist-name" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Sarah's Birthday Bash" required />
-                </div>
-                <div className={styles.formGroup}>
-                  <label htmlFor="description">Description (optional)</label>
-                  <textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="A short description of your event or wishlist" rows="3" />
-                </div>
-                <div className={styles.formGroup}>
-                  <label htmlFor="event-date">Event date</label>
-                  <input id="event-date" type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} required />
-                </div>
-                <button type="submit" className={styles.submitButton} disabled={loading}>
-                  {loading ? 'Creating...' : 'Create Wishlist'}
-                </button>
+                <div className={styles.formGroup}><label htmlFor="wishlist-name">Wishlist name</label><input id="wishlist-name" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Sarah's Birthday Bash" required /></div>
+                <div className={styles.formGroup}><label htmlFor="description">Description (optional)</label><textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="A short description of your event or wishlist" rows="3" /></div>
+                <div className={styles.formGroup}><label htmlFor="event-date">Event date</label><input id="event-date" type="date" value={eventDate} onChange={(e) => setEventDate(e.target.value)} required /></div>
+                <button type="submit" className={styles.submitButton} disabled={loading}>{loading ? 'Creating...' : 'Create Wishlist'}</button>
               </form>
             </>
           ) : (
@@ -156,15 +159,18 @@ const CreateWishlistPage = () => {
                     <textarea value={item.description} onChange={(e) => handleItemChange(index, 'description', e.target.value)} placeholder="Description (Optional)" rows="2" />
                     <div className={styles.itemRow}>
                       <input type="number" value={item.quantity} onChange={(e) => handleItemChange(index, 'quantity', e.target.value)} placeholder="Qty" min="1" />
-                      <input type="number" value={item.price} onChange={(e) => handleItemChange(index, 'price', e.target.value)} placeholder="Price ($)" min="0" step="0.01" />
+                      <div className={styles.priceGroup}>
+                        <select value={item.currency} onChange={(e) => handleItemChange(index, 'currency', e.target.value)}>
+                          <option value="USD">$</option><option value="NGN">₦</option><option value="EUR">€</option><option value="GBP">£</option><option value="KES">KSh</option>
+                        </select>
+                        <input type="number" value={item.price} onChange={(e) => handleItemChange(index, 'price', e.target.value)} placeholder="Price" min="0" step="0.01" />
+                      </div>
                     </div>
                     <input type="url" value={item.vendorLink} onChange={(e) => handleItemChange(index, 'vendorLink', e.target.value)} placeholder="Vendor Link (Optional)" />
                     <input type="url" value={item.imageUrl} onChange={(e) => handleItemChange(index, 'imageUrl', e.target.value)} placeholder="Image URL (Optional)" />
                   </div>
                 ))}
-                <button type="submit" className={styles.submitButton} disabled={loading}>
-                  {loading ? 'Saving Items...' : 'Add Items & Finish'}
-                </button>
+                <button type="submit" className={styles.submitButton} disabled={loading}>{loading ? 'Saving Items...' : 'Add Items & Finish'}</button>
               </form>
             </>
           )}

@@ -113,3 +113,62 @@
 .modalContent p { color: #6b7280; font-size: 0.9rem; text-align: center; line-height: 1.5; }
 .modalButton { padding: 0.6rem; background-color: #3b83f7; color: white; border: none; border-radius: 0.5rem; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; margin-top: 1rem; }
 .modalButton:hover { background-color: #2563eb; }
+
+/* ... (all existing styles) ... */
+
+/* --- NEW STYLES --- */
+.priceGroup {
+  display: flex;
+  flex-grow: 1;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.priceGroup select {
+  padding: 0 0.5rem;
+  border: none;
+  background-color: #f9fafb;
+  font-weight: 500;
+}
+
+.priceGroup input {
+  border: none !important;
+  flex-grow: 1;
+}
+
+.celebrateEmoji {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
+.successButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.secondaryButton {
+  padding: 0.6rem;
+  background-color: #e5e7eb;
+  color: #374151;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.secondaryButton:hover {
+  background-color: #d1d5db;
+}
+
+/* Make row responsive on small screens */
+@media (max-width: 400px) {
+  .itemRow {
+    flex-direction: column;
+  }
+}
