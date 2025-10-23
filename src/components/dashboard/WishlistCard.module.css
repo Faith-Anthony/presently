@@ -69,3 +69,11 @@
   color: #3b83f7;
   text-decoration: none;
 }
+
+.deleteLink {
+  color: #ef4444; 
+}
+
+.deleteLink:hover {
+  color: #dc2626; 
+}

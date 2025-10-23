@@ -172,3 +172,32 @@
     flex-direction: column;
   }
 }
+
+/* Add these styles for react-select */
+.currencySelect {
+  /* Adjust width as needed, ensure it fits well in the row */
+  min-width: 100px; 
+  font-size: 0.9rem; /* Slightly smaller font for the compact selector */
+}
+
+/* Optional: Basic styling overrides for react-select components */
+/* Prefix is based on classNamePrefix='react-select' */
+.currencySelect .react-select__control {
+  min-height: auto;
+  height: 100%; /* Match height of other inputs in the row */
+  border: none; /* Remove border as it's inside priceGroup */
+  box-shadow: none; /* Remove default focus shadow */
+  border-radius: 0; /* Remove internal border radius */
+}
+
+.currencySelect .react-select__indicator-separator {
+  display: none; /* Hide the vertical separator */
+}
+
+.currencySelect .react-select__value-container {
+  padding: 0 0.5rem; /* Adjust padding */
+}
+
+.currencySelect .react-select__placeholder {
+  font-size: 0.9rem;
+}

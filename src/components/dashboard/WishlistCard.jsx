@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 import styles from './WishlistCard.module.css';
 import toast from 'react-hot-toast';
 
-const WishlistCard = ({ wishlist }) => {
+// Add onDelete prop
+const WishlistCard = ({ wishlist, onDelete }) => {
   const { id, name, eventDate, itemCount } = wishlist || {};
 
-  const formattedDate = eventDate && typeof eventDate.toDate === 'function' 
+  const formattedDate = eventDate && typeof eventDate.toDate === 'function'
     ? eventDate.toDate().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
     : 'No date set';
 
@@ -25,6 +26,8 @@ const WishlistCard = ({ wishlist }) => {
         <div className={styles.buttonGroup}>
           <button onClick={handleShare} className={styles.actionButton}>Share</button>
           <Link to={`/wishlist/${id}/manage`} className={styles.actionButton}>Manage</Link>
+          {/* Add the Delete button, calling the onDelete function passed from parent */}
+          <button onClick={() => onDelete(wishlist)} className={`${styles.actionButton} ${styles.deleteLink}`}>Delete</button>
           <Link to={`/wishlist/${id}`} className={styles.viewLink}>View</Link>
         </div>
       </div>

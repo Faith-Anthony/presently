@@ -7,14 +7,23 @@ const CheckIcon = () => (
   </svg>
 );
 
+// This function uses the currency code passed from the item data
 const formatPrice = (price, currency = 'USD') => {
   if (!price || isNaN(price)) return null;
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(price);
+  // Use 'en' locale for broad compatibility, adjust if needed
+  try {
+    return new Intl.NumberFormat('en', { style: 'currency', currency: currency }).format(price);
+  } catch (e) {
+    // Fallback if currency code is invalid
+    console.warn("Invalid currency code:", currency);
+    return new Intl.NumberFormat('en', { style: 'currency', currency: 'USD' }).format(price);
+  }
 };
 
 const WishlistItem = ({ item, onPick }) => {
   const { id, name, description, price, currency, vendorLink, imageUrl, status } = item;
-  const displayPrice = formatPrice(price, currency);
+  // Pass the item's currency code to the formatter
+  const displayPrice = formatPrice(price, currency); 
 
   return (
     <div className={styles.card}>
@@ -47,4 +56,4 @@ const WishlistItem = ({ item, onPick }) => {
   );
 };
 
-export default WishlistItem;
+export default WishlistItem; 

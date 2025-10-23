@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth } from '../firebase/config';
+import { auth, db } from '../firebase/config'; // Import db
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore'; // Import Firestore functions
 import toast from 'react-hot-toast';
 import styles from './Auth.module.css';
 import Logo from '../components/Logo';
 import { checkIfUserHasWishlists } from '../firebase/services';
+import LoadingSpinner from '../components/UI/LoadingSpinner';
 
 // Helper components for the icons
 const EyeIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>);
@@ -18,16 +20,34 @@ const SignupPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSuccessfulLogin = async (user) => {
+  // Function to create/update user profile in Firestore
+  const createUserProfile = async (user) => {
     if (!user) return;
-    const hasWishlists = await checkIfUserHasWishlists(user.uid);
-    if (hasWishlists) {
-      navigate('/dashboard');
-    } else {
-      navigate('/create-wishlist');
+    const userRef = doc(db, "users", user.uid);
+    try {
+      await setDoc(userRef, {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName || user.email.split('@')[0],
+        createdAt: serverTimestamp(),
+        freeWishlistsCreated: 0 // Initialize the counter
+      }, { merge: true }); // Use merge to safely create or update
+      console.log("User profile created/updated for:", user.uid);
+    } catch (error) {
+      console.error("Error creating user profile: ", error);
+      toast.error("Could not save user profile information.");
     }
+  };
+
+  // Handles navigation after successful signup & profile creation
+  const handleSuccessfulSignup = async (user) => {
+    if (!user) return;
+    await createUserProfile(user); // Ensure profile is created
+    // Navigate directly to create first wishlist for new user
+    navigate('/create-wishlist');
   };
 
   const handleSignup = async (e) => {
@@ -35,69 +55,66 @@ const SignupPage = () => {
     if (password !== confirmPassword) {
       return toast.error("Passwords do not match!");
     }
+    setIsLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       toast.success('Account created successfully!');
-      await handleSuccessfulLogin(userCredential.user);
+      await handleSuccessfulSignup(userCredential.user); // Call the signup-specific handler
     } catch (error) {
       toast.error(error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
-  
+
   const handleGoogleSignIn = async () => {
-    const provider = new GoogleAuthProvider();
+    setIsLoading(true);
     try {
-      const result = await signInWithPopup(auth, provider);
+      const result = await signInWithPopup(auth, new GoogleAuthProvider());
       toast.success('Signed in with Google successfully!');
-      await handleSuccessfulLogin(result.user);
+      // Check if user is new or existing based on metadata (optional but good)
+      // const isNewUser = getAdditionalUserInfo(result)?.isNewUser;
+      await handleSuccessfulSignup(result.user); // Treat Google sign-in like signup flow initially
     } catch (error) {
       toast.error(error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className={styles.authContainer}>
-      <Logo />
-      <div className={styles.authCard}>
-        <h2>Create an Account</h2>
-        <form onSubmit={handleSignup} className={styles.authForm}>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email Address" required />
-          
-          <div className={styles.passwordWrapper}>
-            <input 
-              type={showPassword ? 'text' : 'password'} 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
-              placeholder="Password" 
-              required 
-            />
-            <button type="button" onClick={() => setShowPassword(!showPassword)} className={styles.eyeButton}>
-              {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+    <>
+      {isLoading && <LoadingSpinner />}
+      <div className={styles.authContainer}>
+        <Logo />
+        <div className={styles.authCard}>
+          <h2>Create an Account</h2>
+          <form onSubmit={handleSignup} className={styles.authForm}>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email Address" required />
+            <div className={styles.passwordWrapper}>
+              <input type={showPassword ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className={styles.eyeButton}>
+                {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+              </button>
+            </div>
+            <div className={styles.passwordWrapper}>
+              <input type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Confirm Password" required />
+              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className={styles.eyeButton}>
+                {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
+              </button>
+            </div>
+            <button type="submit" disabled={isLoading}>
+              {isLoading ? 'Creating Account...' : 'Sign Up'}
             </button>
-          </div>
-          
-          <div className={styles.passwordWrapper}>
-            <input 
-              type={showConfirmPassword ? 'text' : 'password'} 
-              value={confirmPassword} 
-              onChange={(e) => setConfirmPassword(e.target.value)} 
-              placeholder="Confirm Password" 
-              required 
-            />
-            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className={styles.eyeButton}>
-              {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
-            </button>
-          </div>
-
-          <button type="submit">Sign Up</button>
-        </form>
-        <div className={styles.divider}>OR</div>
-        <button onClick={handleGoogleSignIn} className={styles.googleButton}>
-          Sign Up with Google
-        </button>
-        <p>Already have an account? <Link to="/login">Log In</Link></p>
+          </form>
+          <div className={styles.divider}>OR</div>
+          <button type="button" onClick={handleGoogleSignIn} className={styles.googleButton} disabled={isLoading}>
+            Sign Up with Google
+          </button>
+          <p>Already have an account? <Link to="/login">Log In</Link></p>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
