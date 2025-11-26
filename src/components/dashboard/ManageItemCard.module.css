@@ -22,7 +22,7 @@
 .deleteButton {
   background: none;
   border: none;
-  color: #ef4444; /* Red color */
+  color: #ef4444; 
   font-weight: 600;
   cursor: pointer;
   padding: 0.25rem;

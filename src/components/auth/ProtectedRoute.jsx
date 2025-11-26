@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import LoadingSpinner from '../UI/LoadingSpinner'; // Import the spinner
+import LoadingSpinner from '../UI/LoadingSpinner'; 
 
 const ProtectedRoute = ({ children }) => {
   const { currentUser, loading } = useAuth(); // Get the loading state from our context

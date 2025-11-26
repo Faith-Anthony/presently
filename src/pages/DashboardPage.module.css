@@ -17,8 +17,6 @@
   gap: 1.5rem;
 }
 
-/* --- Media Queries for Responsive Layout --- */
-
 /* On tablets and larger */
 @media (min-width: 768px) {
   .mainContent {
@@ -118,13 +116,13 @@
   background-color: #dc2626; 
 }
 
-/* Add this style to the bottom of your existing CSS file */
+
 .errorState {
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  color: #ef4444; /* Red color */
+  color: #ef4444; 
   font-weight: 500;
   padding: 2rem;
   text-align: center;

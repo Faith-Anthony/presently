@@ -1,18 +1,47 @@
+/* Add this wrapper to establish a positioning context */
+.modalWrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* Style for the X button */
+.closeButton {
+  position: absolute;
+  top: -10px; /* Adjust slightly to fit your design preference */
+  right: -10px; /* Adjust slightly to fit your design preference */
+  background: transparent;
+  border: none;
+  font-size: 2rem;
+  line-height: 1;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 5px;
+  transition: color 0.2s ease;
+  z-index: 10; /* Ensure it sits above other content */
+}
+
+.closeButton:hover {
+  color: #374151; /* Darker gray on hover */
+}
+
+/* Existing styles below... */
 .content {
   display: flex;
   flex-direction: column;
   gap: 1rem;
   text-align: center;
+  padding-top: 1rem; /* Add a little top padding so the title doesn't hit the X */
 }
 
 .content h3 {
   font-size: 1.25rem;
   font-weight: 600;
-  word-break: break-word; /* Handle long item names */
+  word-break: break-word;
+  padding-right: 1.5rem; /* Prevent title from overlapping the X */
 }
 
 .content p {
-  color: #6b7280; /* Gray text */
+  color: #6b7280;
   font-size: 0.9rem;
   line-height: 1.5;
 }
@@ -28,8 +57,8 @@
 .form textarea {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db; /* Gray border */
-  border-radius: 0.5rem; /* Rounded corners */
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
   font-size: 1rem;
   box-sizing: border-box;
   font-family: inherit;
@@ -39,13 +68,13 @@
 .form textarea:focus {
   outline: 2px solid transparent;
   outline-offset: 2px;
-  border-color: #3b83f7; /* Blue border on focus */
+  border-color: #3b83f7;
   box-shadow: 0 0 0 2px rgba(59, 131, 247, 0.3);
 }
 
 .confirmButton {
   padding: 0.8rem;
-  background-color: #3b83f7; /* Blue background */
+  background-color: #3b83f7;
   color: white;
   border: none;
   border-radius: 0.5rem;
@@ -56,10 +85,10 @@
 }
 
 .confirmButton:hover:not(:disabled) {
-  background-color: #2563eb; /* Darker blue on hover */
+  background-color: #2563eb;
 }
 
 .confirmButton:disabled {
-    background-color: #9ca3af; /* Gray when disabled */
+    background-color: #9ca3af;
     cursor: not-allowed;
 }

@@ -1,133 +1,143 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase/config';
-import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc, writeBatch, getDocs } from 'firebase/firestore';
-import styles from './DashboardPage.module.css';
-import { Link } from 'react-router-dom';
+import { collection, query, where, onSnapshot, doc, deleteDoc, runTransaction, increment } from 'firebase/firestore';
 import toast from 'react-hot-toast';
-
-import DashboardNav from '../components/dashboard/DashboardNav';
-import DashboardHeader from '../components/dashboard/DashboardHeader';
-import WishlistCard from '../components/dashboard/WishlistCard';
-import UpgradePrompt from '../components/dashboard/UpgradePrompt';
-import ScrollAnimationWrapper from '../components/ScrollAnimationWrapper';
+import styles from './DashboardPage.module.css';
 import LoadingSpinner from '../components/UI/LoadingSpinner';
-import Modal from '../components/UI/Modal';
 
 const DashboardPage = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, logout } = useAuth();
   const [wishlists, setWishlists] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [wishlistToDelete, setWishlistToDelete] = useState(null);
-
+  // Fetch Wishlists
   useEffect(() => {
-    if (!currentUser) {
-      setLoading(false); return;
-    }
-    setLoading(true); setError(null);
+    if (!currentUser) return;
+    
     const wishlistsRef = collection(db, 'wishlists');
-    const q = query(
-      wishlistsRef,
-      where("userId", "==", currentUser.uid),
-      orderBy("createdAt", "desc")
-    );
+    const q = query(wishlistsRef, where('userId', '==', currentUser.uid));
 
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const userWishlists = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setWishlists(userWishlists);
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const lists = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setWishlists(lists);
       setLoading(false);
-    }, (err) => {
-      console.error("Firestore query error:", err);
-      setError("Could not fetch wishlists. Please try refreshing.");
-      toast.error("Could not fetch your wishlists.");
+    }, (error) => {
+      console.error("Error fetching wishlists:", error);
+      toast.error("Could not load dashboard.");
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, [currentUser]);
 
-  const userName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'User';
-  const canCreateMore = wishlists.length < 2;
-
-  // Function to open the delete confirmation modal
-  const handleDeleteWishlist = (wishlist) => {
-    setWishlistToDelete(wishlist);
-    setShowDeleteConfirm(true);
+  // *** HELPER: URL Slugify ***
+  const slugify = (text) => {
+    return text
+      .toString()
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, '-')
+      .replace(/[^\w\-]+/g, '')
+      .replace(/\-\-+/g, '-');
   };
 
-  // Function to perform the actual deletion
-  const confirmDeleteWishlist = async () => {
-    if (!wishlistToDelete) return;
-    setShowDeleteConfirm(false);
-    const loadingToastId = toast.loading("Deleting wishlist...");
-    try {
-      const itemsRef = collection(db, 'wishlists', wishlistToDelete.id, 'items');
-      const itemsSnapshot = await getDocs(itemsRef);
-      const batch = writeBatch(db);
-      itemsSnapshot.forEach((doc) => { batch.delete(doc.ref); });
-      await batch.commit();
+  // *** UPDATED: Share Function ***
+  const handleShare = (wishlistId) => {
+    const ownerName = currentUser?.displayName || 'user';
+    const nameSlug = slugify(ownerName);
+    
+    // Use 'presently' in the URL
+    const shareUrl = `${window.location.origin}/presently/${nameSlug}/${wishlistId}`;
+    
+    navigator.clipboard.writeText(shareUrl);
+    toast.success('Link copied to clipboard!');
+  };
 
-      const wishlistRef = doc(db, 'wishlists', wishlistToDelete.id);
-      await deleteDoc(wishlistRef);
-      toast.success(`'${wishlistToDelete.name}' deleted successfully.`, { id: loadingToastId });
+  // Handle Delete Wishlist
+  const handleDelete = async (wishlistId) => {
+    if (!confirm("Are you sure you want to delete this wishlist? This cannot be undone.")) return;
+
+    try {
+      await runTransaction(db, async (transaction) => {
+         // 1. Delete the wishlist doc
+         const wishlistRef = doc(db, 'wishlists', wishlistId);
+         transaction.delete(wishlistRef);
+         
+         // 2. Decrement user count
+         const userRef = doc(db, 'users', currentUser.uid);
+         transaction.update(userRef, { freeWishlistsCreated: increment(-1) });
+      });
+      toast.success("Wishlist deleted.");
     } catch (error) {
-      toast.error("Failed to delete wishlist.", { id: loadingToastId });
-      console.error("Error deleting wishlist: ", error);
-    } finally {
-      setWishlistToDelete(null);
+      console.error("Error deleting wishlist:", error);
+      toast.error("Failed to delete wishlist.");
     }
   };
 
-  // Show spinner only during the initial data load OR if currentUser is not yet available
-  if (loading || !currentUser) {
-    return <LoadingSpinner />;
-  }
-
-  if (error) {
-    return <div className={styles.errorState}>{error}</div>;
-  }
+  if (loading) return <LoadingSpinner />;
 
   return (
-    <>
-      <Modal isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)}>
-        <div className={styles.confirmModalContent}>
-          <h3>Delete Wishlist?</h3>
-          <p>Are you sure you want to delete "<strong>{wishlistToDelete?.name}</strong>"? This cannot be undone, and shared links will stop working.</p>
-          <div className={styles.confirmButtons}>
-            <button onClick={() => setShowDeleteConfirm(false)} className={styles.cancelButton}>Cancel</button>
-            <button onClick={confirmDeleteWishlist} className={styles.deleteButton}>Yes, Delete Permanently</button>
-          </div>
-        </div>
-      </Modal>
+    <div className={styles.dashboardContainer}>
+      <header className={styles.header}>
+        <h1>Welcome back, {currentUser?.displayName || 'User'}!</h1>
+        <button onClick={() => navigate('/create-wishlist')} className={styles.createButton}>
+          Create New Wishlist
+        </button>
+      </header>
 
-      <div className={styles.dashboardContainer}>
-        <DashboardNav />
-        <main className={styles.mainContent}>
-          <DashboardHeader userName={userName} canCreate={canCreateMore} />
-          <ScrollAnimationWrapper><UpgradePrompt /></ScrollAnimationWrapper>
-
-          {wishlists.length === 0 ? (
-            <div className={styles.noWishlists}>
-              <h3>No wishlists yet!</h3>
-              <p>Get started by creating your first one.</p>
-              <Link to="/create-wishlist" className={styles.createButtonLink}>Create a Wishlist</Link>
-            </div>
-          ) : (
-            <div className={styles.wishlistGrid}>
-              {wishlists.map(wishlist => (
-                <ScrollAnimationWrapper key={wishlist.id}>
-                  {/* Pass the correct function reference */}
-                  <WishlistCard wishlist={wishlist} onDelete={handleDeleteWishlist} />
-                </ScrollAnimationWrapper>
-              ))}
-            </div>
-          )}
-        </main>
+      <div className={styles.planBanner}>
+        <p>You're on the Free Plan. Upgrade to unlock more features!</p>
+        <button className={styles.upgradeButton}>Upgrade Now</button>
       </div>
-    </>
+
+      {wishlists.length === 0 ? (
+        <div className={styles.emptyState}>
+          <h3>No wishlists yet!</h3>
+          <p>Get started by creating your first one.</p>
+          <button onClick={() => navigate('/create-wishlist')} className={styles.createButton}>
+             Create a Wishlist
+          </button>
+        </div>
+      ) : (
+        <div className={styles.grid}>
+          {wishlists.map((list) => (
+            <div key={list.id} className={styles.card}>
+              <div className={styles.cardHeader}>
+                <h3>{list.name}</h3>
+                <span className={styles.date}>
+                    {list.eventDate?.toDate ? list.eventDate.toDate().toLocaleDateString() : new Date(list.eventDate).toLocaleDateString()}
+                </span>
+              </div>
+              <div className={styles.cardBody}>
+                 <p>{list.itemCount || 0} items</p>
+              </div>
+              <div className={styles.cardActions}>
+                 {/* View Button */}
+                 <Link to={`/presently/${slugify(currentUser?.displayName || 'user')}/${list.id}`} className={styles.actionLink}>View</Link>
+                 
+                 {/* Share Button */}
+                 <button onClick={() => handleShare(list.id)} className={styles.iconButton} title="Share">
+                   Share
+                 </button>
+
+                 {/* Delete Button */}
+                 <button onClick={() => handleDelete(list.id)} className={styles.deleteButton}>Delete</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      
+      <div className={styles.logoutWrapper}>
+          <button onClick={logout} className={styles.logoutButton}>Logout</button>
+      </div>
+    </div>
   );
 };
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom'; // 1. Import Link
+import { Link } from 'react-router-dom'; 
 import styles from './CTA.module.css';
 
 const CTA = () => {
@@ -12,7 +12,7 @@ const CTA = () => {
         <p className={styles.subtitle}>
           Sign up today and start planning your perfect event with Wishlistr. It's free to get started!
         </p>
-        {/* 2. Replace <button> with <Link> */}
+       
         <Link to="/signup" className={styles.button}>
           Get Started Now
         </Link>

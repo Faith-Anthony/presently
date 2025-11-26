@@ -82,7 +82,6 @@
   gap: 1.5rem;
 }
 
-/* --- Responsive Media Queries --- */
 @media (min-width: 640px) {
   .wishlistInfo h1 {
     font-size: 2.5rem;
@@ -98,7 +97,6 @@
   }
 }
 
-/* Add these styles to your existing WishlistDetailsPage.module.css file */
 .loading {
   display: flex;
   align-items: center;

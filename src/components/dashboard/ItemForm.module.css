@@ -29,7 +29,7 @@
   flex-grow: 1;
   border: 1px solid #d1d5db;
   border-radius: 0.5rem;
-  /* **REMOVED**: overflow: hidden; */
+ 
 }
 
 .currencySelect {
@@ -40,7 +40,7 @@
 
 .currencySelect .react-select__control {
   min-height: auto;
-  /* height: 100%; REMOVED - Let react-select size itself */
+  
   border: none;
   border-right: 1px solid #d1d5db;
   box-shadow: none;

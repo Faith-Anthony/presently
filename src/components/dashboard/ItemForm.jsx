@@ -85,7 +85,7 @@ const ItemForm = ({ item, onSave, onDelete, onCancel, isNew = false }) => {
             className={styles.currencySelect}
             classNamePrefix="react-select"
             options={currencyOptions}
-            // **FIX**: Value is the currency object directly from state
+            
             value={currency}
             onChange={setCurrency} // Directly update the currency state object
             isSearchable={true}

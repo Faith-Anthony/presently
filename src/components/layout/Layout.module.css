@@ -1,0 +1,15 @@
+.layoutContainer {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Forces the layout to fill the screen */
+  background-color: #f9fafb; /* Light gray background */
+}
+
+.mainContent {
+  flex: 1; /* Pushes the footer down if content is short */
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0;
+  box-sizing: border-box;
+}

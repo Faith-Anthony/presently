@@ -1,38 +1,38 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 
-import LandingPage from './pages/LandingPage';
+// Layouts & Pages
+import Layout from './components/layout/Layout';
+import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import DashboardPage from './pages/DashboardPage';
-import WishlistDetailsPage from './pages/WishlistDetailsPage';
 import CreateWishlistPage from './pages/CreateWishlistPage';
-import ManageItemsPage from './pages/ManageItemsPage'; // 1. Import the correct page
-
-import ProtectedRoute from './components/auth/ProtectedRoute';
+import WishlistDetailsPage from './pages/WishlistDetailsPage';
+import PrivateRoute from './components/PrivateRoute';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Toaster position="top-center" reverseOrder={false} />
-        <Routes>
-          {/* --- Public Routes --- */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/wishlist/:id" element={<WishlistDetailsPage />} />
+    <>
+      <Toaster position="top-center" />
+      <Routes>
+        {/* Landing Page with Header/Footer */}
+        <Route path="/" element={<Layout><HomePage /></Layout>} />
 
-          {/* --- Protected Routes --- */}
-          <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-          <Route path="/create-wishlist" element={<ProtectedRoute><CreateWishlistPage /></ProtectedRoute>} />
+        {/* Auth Pages - NO LAYOUT (No Header/Footer) */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
 
-          {/* 2. UPDATE this route to use the new page */}
-          <Route path="/wishlist/:id/manage" element={<ProtectedRoute><ManageItemsPage /></ProtectedRoute>} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+        {/* Protected Routes (Require Login + Layout) */}
+        <Route path="/dashboard" element={<PrivateRoute><Layout><DashboardPage /></Layout></PrivateRoute>} />
+        <Route path="/create-wishlist" element={<PrivateRoute><Layout><CreateWishlistPage /></Layout></PrivateRoute>} />
+
+        {/* Public Wishlist View */}
+        <Route path="/presently/:name/:id" element={<Layout><WishlistDetailsPage /></Layout>} />
+        <Route path="/wishlist/:id" element={<Layout><WishlistDetailsPage /></Layout>} />
+      </Routes>
+    </>
   );
 }
 

@@ -77,11 +77,10 @@
   text-decoration: underline;
 }
 
-/* Renamed from pickButton */
 .reserveButton {
   width: 100%;
   padding: 0.6rem 0;
-  background-color: #3b83f7; /* Blue */
+  background-color: #3b83f7; 
   color: white;
   border: none;
   border-radius: 0.5rem;
@@ -92,7 +91,7 @@
 }
 
 .reserveButton:hover {
-  background-color: #2563eb; /* Darker blue */
+  background-color: #2563eb; 
 }
 
 /* Renamed from pickedStatus */
@@ -103,8 +102,8 @@
   gap: 0.5rem;
   width: 100%;
   padding: 0.6rem 0;
-  background-color: #e5e7eb; /* Light Gray */
-  color: #4b5563; /* Darker Gray */
+  background-color: #e5e7eb; 
+  color: #4b5563; 
   border-radius: 0.5rem;
   font-weight: 600;
   font-size: 0.9rem;
@@ -120,4 +119,22 @@
 
 .reservedCard:hover .image {
     transform: none; /* Disable zoom on reserved items */
+}
+
+.undoButton {
+  width: 100%;
+  padding: 0.6rem 0;
+  background-color: white; 
+  color: #ef4444; /* Red text */
+  border: 1px solid #ef4444; /* Red border */
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: auto;
+  font-size: 0.9rem;
+}
+
+.undoButton:hover {
+  background-color: #fef2f2; /* Light red background on hover */
 }

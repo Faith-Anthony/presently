@@ -1,84 +1,124 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth } from '../firebase/config';
-import toast from 'react-hot-toast';
-import styles from './Auth.module.css';
-import Logo from '../components/Logo';
-import LoadingSpinner from '../components/UI/LoadingSpinner';
-
-const EyeIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>);
-const EyeOffIcon = () => (<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.44-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L21.73 23 23 21.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/></svg>);
-
+import { useAuth } from '../context/AuthContext';
+import styles from './auth.module.css'; // Importing the shared auth styles
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  
+  const { login, googleSignIn } = useAuth(); 
   const navigate = useNavigate();
 
-  // **NEW, SIMPLIFIED HANDLER LOGIC**
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
+
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      toast.success('Logged in successfully!');
+      setError('');
+      setLoading(true);
+      await login(email, password);
       navigate('/dashboard');
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      // This will always run, ensuring the spinner is turned off.
-      setIsLoading(false);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to log in. Please check your email and password.');
     }
+
+    setLoading(false);
   };
-  
+
   const handleGoogleSignIn = async () => {
-    setIsLoading(true);
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
-      toast.success('Signed in with Google successfully!');
+      setError('');
+      setLoading(true);
+      await googleSignIn();
       navigate('/dashboard');
-    } catch (error) {
-      toast.error(error.message);
-    } finally {
-      // This will always run, ensuring the spinner is turned off.
-      setIsLoading(false);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to sign in with Google.');
     }
+    setLoading(false);
   };
 
   return (
-    <>
-      {isLoading && <LoadingSpinner />}
-      <div className={styles.authContainer}>
-        <Logo />
-        <div className={styles.authCard}>
-          <h2>Welcome Back!</h2>
-          <form onSubmit={handleLogin} className={styles.authForm}>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email Address" required />
-            <div className={styles.passwordWrapper}>
-              <input type={showPassword ? 'text' : 'password'}
-               value={password} 
-               onChange={(e) => setPassword(e.target.value)} 
-               placeholder="Password" required
-              autoComplete="current-password" />
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className={styles.eyeButton}>
-                {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-              </button>
-            </div>
-            <button type="submit" disabled={isLoading}>
-              {isLoading ? 'Logging In...' : 'Log In'}
+    <div className={styles.container}>
+      <div className={styles.logoWrapper}>
+         <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+          <div style={{ backgroundColor: '#3b83f7', padding: '8px', borderRadius: '8px', display: 'flex' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 7H4C2.89543 7 2 7.89543 2 9V19C2 20.1046 2.89543 21 4 21H20C21.1046 21 22 20.1046 22 19V9C22 7.89543 21.1046 7 20 7Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M16 21V5C16 4.46957 15.7893 3.96086 15.4142 3.58579C15.0391 3.21071 14.5304 3 14 3H10C9.46957 3 8.96086 3.21071 8.58579 3.58579C8.21071 3.96086 8 4.46957 8 5V21" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <span style={{ fontSize: '1.25rem', fontWeight: '800', color: '#111418' }}>Presently</span>
+        </Link>
+      </div>
+
+      <div className={styles.card}>
+        <h2>Welcome Back!</h2>
+        
+        {error && <div style={{ color: '#dc2626', marginBottom: '1rem', textAlign: 'center', fontSize: '0.9rem', backgroundColor: '#fee2e2', padding: '0.5rem', borderRadius: '0.375rem' }}>{error}</div>}
+
+        <form onSubmit={handleSubmit} className={styles.form}>
+          {/* Email Input */}
+          <input
+            type="email"
+            placeholder="Email Address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className={styles.input}
+          />
+          
+          {/* Password Input with Toggle */}
+          <div className={styles.inputWrapper}>
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className={styles.input}
+            />
+            <button 
+              type="button" 
+              className={styles.toggleBtn}
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label="Toggle password visibility"
+            >
+              {showPassword ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+              )}
             </button>
-          </form>
-          <div className={styles.divider}>OR</div>
-          <button type="button" onClick={handleGoogleSignIn} className={styles.googleButton} disabled={isLoading}>
-            Sign In with Google
+          </div>
+
+          <button disabled={loading} type="submit" className={styles.submitButton}>
+            {loading ? 'Logging In...' : 'Log In'}
           </button>
-          <p>Don't have an account? <Link to="/signup">Sign Up</Link></p>
+        </form>
+
+        <div className={styles.divider}>
+          <span>OR</span>
+        </div>
+
+        <button 
+          onClick={handleGoogleSignIn} 
+          disabled={loading}
+          className={styles.googleButton}
+        >
+          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style={{ width: '18px', height: '18px' }} />
+          Sign In with Google
+        </button>
+
+        <div className={styles.switchText}>
+          Don't have an account? <Link to="/signup" className={styles.link}>Sign Up</Link>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

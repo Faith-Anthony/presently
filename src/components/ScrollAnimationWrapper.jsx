@@ -16,7 +16,7 @@ const ScrollAnimationWrapper = ({ children }) => {
   }, [controls, inView]);
 
   const boxVariant = {
-    hidden: { opacity: 0, y: 50 }, // Start hidden and slightly below
+    hidden: { opacity: 0, y: 50 }, 
     visible: {
       opacity: 1,
       y: 0,
