@@ -1,16 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import styles from './HomePage.module.css';
 
-const HomePage = () => {
-  // State to handle the FAQ dropdowns
-  const [openFaqIndex, setOpenFaqIndex] = useState(null);
+/* --- Inline Icons --- */
+const Menu = ({ size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+);
+const X = ({ size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M18 6 6 18"/><path d="m6 6 18 18"/></svg>
+);
+const Check = ({ size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="20 6 9 17 4 12"/></svg>
+);
+const ChevronDown = ({ size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m6 9 6 6 6-6"/></svg>
+);
+const ChevronUp = ({ size = 24, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m18 15-6-6-6 6"/></svg>
+);
+const Wallet = ({ size = 24, color = "currentColor", ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>
+);
+const Star = ({ size = 24, fill = "none", color = "currentColor", ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+);
 
-  const toggleFaq = (index) => {
-    setOpenFaqIndex(openFaqIndex === index ? null : index);
+const HomePage = () => {
+  const [openFaq, setOpenFaq] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  // Refs for scroll animation
+  const revealRefs = useRef([]);
+
+  // Add elements to the refs array
+  const addToRefs = (el) => {
+    if (el && !revealRefs.current.includes(el)) {
+      revealRefs.current.push(el);
+    }
   };
 
-  // Scroll Reveal Animation Logic
+  // Intersection Observer for Lazy Loading
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -20,356 +49,316 @@ const HomePage = () => {
           }
         });
       },
-      { threshold: 0.1 } // Trigger when 10% of the item is visible
+      {
+        threshold: 0.1,
+        rootMargin: "0px 0px -50px 0px"
+      }
     );
 
-    // Select all elements with the 'reveal' class
-    const hiddenElements = document.querySelectorAll(`.${styles.reveal}`);
-    hiddenElements.forEach((el) => observer.observe(el));
+    revealRefs.current.forEach((el) => observer.observe(el));
 
     return () => {
-      hiddenElements.forEach((el) => observer.unobserve(el));
+      revealRefs.current.forEach((el) => {
+        if (el) observer.unobserve(el);
+      });
     };
   }, []);
 
-  // FAQ Data
+  const toggleFaq = (index) => {
+    setOpenFaq(openFaq === index ? null : index);
+  };
+
   const faqs = [
     {
       question: "Is Presently really free?",
-      answer: "Yes! Our Basic plan is completely free and allows you to create up to 2 wishlists with 5 items each. It's perfect for getting started."
+      answer: "Yes! Our Starter plan is completely free and lets you create 1 active wishlist with up to 5 items. It's perfect for trying out the platform."
     },
     {
-      question: "Can guests reserve items without an account?",
-      answer: "Absolutely. We designed the guest experience to be frictionless. They can view and reserve gifts just by entering their name—no signup required."
+      question: "Can I share my list with anyone?",
+      answer: "Absolutely. You get a unique public link for each wishlist that you can share via text, email, or social media. No account needed to view it."
     },
     {
-      question: "How do I share my wishlist?",
-      answer: "Once you create a list, you'll get a unique \"Presently\" link (e.g., presently/your-name/list-id). You can copy and paste this link anywhere—social media, WhatsApp, or email."
-    },
-    {
-      question: "Can I add items from any store?",
-      answer: "Yes. You can manually add items from Amazon, Etsy, local boutiques, or anywhere else. Just paste the link and fill in the details."
+      question: "How do I mark items as purchased?",
+      answer: "When your friends visit your link, they can click 'Reserve' or 'Mark as Purchased' on an item so others don't buy it again."
     }
   ];
 
   return (
     <div className={styles.container}>
-      <main>
-        {/* --- Hero Section --- */}
-        <section className={`${styles.heroSection} ${styles.reveal}`}>
-          <div className={styles.heroContent}>
-            <h1 className={styles.heroTitle}>
-              Create & Share Your Perfect Wishlist
-            </h1>
-            <p className={styles.heroSubtitle}>
-              Plan your dream events with ease. From birthdays to weddings,
-              Presently helps you curate and share your ideal gifts with friends
-              and family.
-            </p>
-            <Link to="/signup">
-              <button className={styles.ctaButton}>
-                Get Started for Free
-              </button>
-            </Link>
+      {/* --- NAVBAR (Fixed Top) --- */}
+      <nav className={styles.navbar}>
+        <div className={styles.logoContainer}>
+          <div className={styles.logoIcon}>
+            <Wallet size={22} color="white" />
           </div>
-        </section>
+          <span className={styles.logoText}>Presently</span>
+        </div>
 
-        {/* --- How It Works Section --- */}
-        <section className={`${styles.section} ${styles.reveal}`} id="how-it-works">
-          <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>
-              Simple Steps to Your Dream Event
-            </h2>
-            <p className={styles.sectionText}>
-              Presently makes it easy to create, share, and manage your
-              wishlists for any event. Follow these simple steps to get started.
-            </p>
-          </div>
-          <div className={styles.grid}>
-            {/* Step 1 */}
-            <div className={styles.card}>
-              <div className={styles.iconWrapper}>
-                <svg fill="none" height="32" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="32" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M21 10H3"></path>
-                  <path d="M21 6H3"></path>
-                  <path d="M21 14H3"></path>
-                  <path d="M21 18H3"></path>
-                </svg>
-              </div>
-              <h3 className={styles.cardTitle}>Create Your Wishlist</h3>
-              <p className={styles.cardText}>
-                Easily add items from any online store or create custom wishes.
-                Organize your list by event or category.
-              </p>
-            </div>
-            {/* Step 2 */}
-            <div className={styles.card}>
-              <div className={styles.iconWrapper}>
-                <svg fill="none" height="32" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="32" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="18" cy="5" r="3"></circle>
-                  <circle cx="6" cy="12" r="3"></circle>
-                  <circle cx="18" cy="19" r="3"></circle>
-                  <line x1="8.59" x2="15.42" y1="13.51" y2="17.49"></line>
-                  <line x1="15.41" x2="8.59" y1="6.51" y2="10.49"></line>
-                </svg>
-              </div>
-              <h3 className={styles.cardTitle}>Share with Loved Ones</h3>
-              <p className={styles.cardText}>
-                Share your wishlist link with friends and family. They can mark
-                items as purchased to avoid duplicates.
-              </p>
-            </div>
-            {/* Step 3 */}
-            <div className={styles.card}>
-              <div className={styles.iconWrapper}>
-                <svg fill="none" height="32" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="32" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2a5 5 0 0 0-5 5v2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V11a2 2 0 0 0-2-2h-2V7a5 5 0 0 0-5-5z"></path>
-                  <path d="M12 22v-4"></path>
-                  <path d="M12 7v4"></path>
-                </svg>
-              </div>
-              <h3 className={styles.cardTitle}>Enjoy Your Special Day</h3>
-              <p className={styles.cardText}>
-                Receive the gifts you truly desire and celebrate your special
-                occasion with joy.
-              </p>
-            </div>
-          </div>
-        </section>
+        {/* Desktop Nav */}
+        <div className={styles.navLinks}>
+          <a href="#features">Features</a>
+          <a href="#pricing">Pricing</a>
+          <a href="#testimonials">Testimonials</a>
+          <a href="#faq">FAQs</a>
+        </div>
 
-        {/* --- Features Section --- */}
-        <section className={`${styles.section} ${styles.reveal}`} id="features">
-          <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>
-              Powerful Features for Seamless Planning
-            </h2>
-            <p className={styles.sectionText}>
-              Presently offers a range of features designed to make your event
-              planning stress-free and enjoyable.
-            </p>
+        <div className={styles.authButtons}>
+          <Link to="/login" className={styles.loginBtn}>Log In</Link>
+          <Link to="/signup" className={styles.signupBtn}>Sign Up</Link>
+        </div>
+
+        {/* Mobile Menu Button */}
+        <button className={styles.mobileMenuBtn} onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </nav>
+
+      {/* Mobile Menu Dropdown */}
+      {mobileMenuOpen && (
+        <div className={styles.mobileMenu}>
+          <a href="#features" onClick={() => setMobileMenuOpen(false)}>Features</a>
+          <a href="#pricing" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
+          <a href="#testimonials" onClick={() => setMobileMenuOpen(false)}>Testimonials</a>
+          <Link to="/login" onClick={() => setMobileMenuOpen(false)}>Log In</Link>
+          <Link to="/signup" onClick={() => setMobileMenuOpen(false)}>Sign Up</Link>
+        </div>
+      )}
+
+      {/* --- HERO SECTION --- */}
+      <header className={`${styles.hero} ${styles.reveal}`} ref={addToRefs}>
+        <div className={styles.heroContent}>
+          <h1>Create & Share Your Perfect Wishlist</h1>
+          <p>Plan your dream events with ease. From birthdays to weddings, Presently helps you curate and share your ideal gifts with friends and family.</p>
+          <Link to="/signup" className={styles.ctaButton}>Get Started for Free</Link>
+        </div>
+      </header>
+
+      {/* --- FEATURES SECTION --- */}
+      <section id="features" className={styles.features}>
+        <div className={`${styles.sectionHeader} ${styles.reveal}`} ref={addToRefs}>
+          <h2>Simple Steps to Your Dream Event</h2>
+          <p className={styles.sectionSubtitle}>Presently makes it easy to create, share, and manage your wishlists for any event.</p>
+        </div>
+        
+        <div className={styles.featureGrid}>
+          {/* Feature 1 - Updated Image */}
+          <div className={`${styles.featureCard} ${styles.reveal}`} ref={addToRefs}>
+            <div className={styles.imageWrapper}>
+              <img 
+                src="https://images.unsplash.com/photo-1512314889357-e157c22f938d?auto=format&fit=crop&w=600&q=80" 
+                alt="Create Wishlist" 
+                className={styles.featureImage} 
+              />
+            </div>
+            <div className={styles.featureText}>
+              <h3>Create Your Wishlist</h3>
+              <p>Start by adding items from any online store. Customize your list with photos, notes, and prices so guests know exactly what you want.</p>
+            </div>
           </div>
-          <div className={styles.grid}>
-            {/* Feature 1 */}
-            <div className={styles.featureItem}>
-              <div className={styles.featureImage} style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=2940&auto=format&fit=crop")' }}></div>
+
+          {/* Feature 2 */}
+          <div className={`${styles.featureCard} ${styles.reveal}`} ref={addToRefs}>
+            <div className={styles.imageWrapper}>
+              <img 
+                src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=600&q=80" 
+                alt="Share with friends" 
+                className={styles.featureImage} 
+              />
+            </div>
+            <div className={styles.featureText}>
+              <h3>Share with Loved Ones</h3>
+              <p>Get a unique, shareable link for your wishlist. Send it instantly via WhatsApp, email, or social media so everyone is on the same page.</p>
+            </div>
+          </div>
+
+          {/* Feature 3 */}
+          <div className={`${styles.featureCard} ${styles.reveal}`} ref={addToRefs}>
+            <div className={styles.imageWrapper}>
+              <img 
+                src="https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=600&q=80" 
+                alt="Enjoy gifts" 
+                className={styles.featureImage} 
+              />
+            </div>
+            <div className={styles.featureText}>
+              <h3>Enjoy Your Special Day</h3>
+              <p>Track what has been purchased in real-time. Guests can mark items as "bought" to avoid duplicates, letting you celebrate stress-free.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* --- PRICING SECTION --- */}
+      <section id="pricing" className={styles.pricing}>
+        <div className={`${styles.reveal}`} ref={addToRefs}>
+          <h2>Choose the Plan That Fits You</h2>
+        </div>
+        <div className={styles.pricingGrid}>
+          {/* Starter Plan */}
+          <div className={`${styles.pricingCard} ${styles.reveal}`} ref={addToRefs}>
+            <div className={styles.planHeader}>
+              <h3>Starter</h3>
+              <div className={styles.price}>Free</div>
+              <p className={styles.planDesc}>Perfect for small events</p>
+            </div>
+            <ul className={styles.planFeatures}>
+              <li><Check size={16} /> 1 Active Wishlist</li>
+              <li><Check size={16} /> 5 Items per List</li>
+              <li><Check size={16} /> Basic Sharing</li>
+            </ul>
+            <Link to="/signup" className={styles.planButtonOutline}>Sign Up Free</Link>
+          </div>
+
+          {/* Standard Plan */}
+          <div className={`${styles.pricingCard} ${styles.popular} ${styles.reveal}`} ref={addToRefs}>
+            <div className={styles.popularTag}>Most Popular</div>
+            <div className={styles.planHeader}>
+              <h3>Standard</h3>
+              <div className={styles.price}>$4.99<span>/mo</span></div>
+              <p className={styles.planDesc}>For avid planners</p>
+            </div>
+            <ul className={styles.planFeatures}>
+              <li><Check size={16} /> 5 Active Wishlists</li>
+              <li><Check size={16} /> Unlimited Items</li>
+              <li><Check size={16} /> Priority Support</li>
+              <li><Check size={16} /> Ad-Free Experience</li>
+            </ul>
+            <button className={styles.planButtonFilled}>Get Standard</button>
+          </div>
+
+          {/* Premium Plan */}
+          <div className={`${styles.pricingCard} ${styles.reveal}`} ref={addToRefs}>
+            <div className={styles.planHeader}>
+              <h3>Premium</h3>
+              <div className={styles.price}>$9.99<span>/mo</span></div>
+              <p className={styles.planDesc}>The ultimate experience</p>
+            </div>
+            <ul className={styles.planFeatures}>
+              <li><Check size={16} /> Unlimited Wishlists</li>
+              <li><Check size={16} /> Custom Themes</li>
+              <li><Check size={16} /> Event Planning Tools</li>
+              <li><Check size={16} /> 24/7 Dedicated Support</li>
+            </ul>
+            <button className={styles.planButtonOutline}>Go Premium</button>
+          </div>
+        </div>
+      </section>
+
+      {/* --- TESTIMONIALS --- */}
+      <section id="testimonials" className={styles.testimonials}>
+        <div className={`${styles.reveal}`} ref={addToRefs}>
+          <h2>Loved by Thousands</h2>
+        </div>
+        <div className={styles.testimonialGrid}>
+          <div className={`${styles.testimonialCard} ${styles.reveal}`} ref={addToRefs}>
+            <div className={styles.stars}>
+              {[...Array(5)].map((_, i) => <Star key={i} size={16} fill="#FBBF24" color="#FBBF24" />)}
+            </div>
+            <p>"Presently made my wedding registry so much easier. My guests loved how simple it was to use! Highly recommended."</p>
+            <div className={styles.user}>
+              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80" alt="Sarah" className={styles.avatar} />
               <div>
-                <h3 className={styles.cardTitle}>Universal Wishlist</h3>
-                <p className={styles.cardText}>
-                  Add items manually from any online store. Keep everything in one place.
-                </p>
+                <strong>Sarah Jenkins</strong>
+                <span>Bride</span>
               </div>
             </div>
-            {/* Feature 2 */}
-            <div className={styles.featureItem}>
-              <div className={styles.featureImage} style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1506784983877-45594efa4cbe?q=80&w=2938&auto=format&fit=crop")' }}></div>
+          </div>
+          <div className={`${styles.testimonialCard} ${styles.reveal}`} ref={addToRefs}>
+            <div className={styles.stars}>
+              {[...Array(5)].map((_, i) => <Star key={i} size={16} fill="#FBBF24" color="#FBBF24" />)}
+            </div>
+            <p>"I used this for my 30th birthday and finally got the gifts I actually wanted. No more guessing games for my friends."</p>
+            <div className={styles.user}>
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80" alt="Mike" className={styles.avatar} />
               <div>
-                <h3 className={styles.cardTitle}>Event-Based Organization</h3>
-                <p className={styles.cardText}>
-                  Create separate wishlists for different events like
-                  birthdays, weddings, or baby showers.
-                </p>
+                <strong>Mike Thompson</strong>
+                <span>Birthday Boy</span>
               </div>
             </div>
-            {/* Feature 3 */}
-            <div className={styles.featureItem}>
-              <div className={styles.featureImage} style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=2940&auto=format&fit=crop")' }}></div>
+          </div>
+          <div className={`${styles.testimonialCard} ${styles.reveal}`} ref={addToRefs}>
+            <div className={styles.stars}>
+              {[...Array(5)].map((_, i) => <Star key={i} size={16} fill="#FBBF24" color="#FBBF24" />)}
+            </div>
+            <p>"The best wishlist app I've tried. It's clean, simple, and my family actually knows how to use it without calling me."</p>
+            <div className={styles.user}>
+              <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=150&q=80" alt="Emily" className={styles.avatar} />
               <div>
-                <h3 className={styles.cardTitle}>Easy Gift Tracking</h3>
-                <p className={styles.cardText}>
-                  Track which items have been reserved by guests to avoid duplicate gifts.
-                </p>
+                <strong>Emily Rivera</strong>
+                <span>Event Planner</span>
               </div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* --- Pricing Section --- */}
-        <section className={`${styles.section} ${styles.reveal}`} id="pricing">
-          <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>
-              Choose Your Perfect Plan
-            </h2>
-            <p className={styles.sectionText}>
-              Start for free and upgrade as your needs grow. Simple,
-              transparent pricing for everyone.
-            </p>
-          </div>
-          <div className={styles.grid}>
-            {/* Free Plan */}
-            <div className={styles.pricingCard}>
-              <h3 className={styles.cardTitle}>Basic</h3>
-              <div className={styles.price}>
-                <span className={styles.amount}>Free</span>
-              </div>
-              <Link to="/signup">
-                <button className={`${styles.planButton} ${styles.btnSecondary}`}>
-                  Get Started
-                </button>
-              </Link>
-              <ul className={styles.featuresList}>
-                <li>
-                  <CheckIcon />
-                  <span>2 Active Wishlists</span>
-                </li>
-                <li>
-                  <CheckIcon />
-                  <span>5 Items Per List</span>
-                </li>
-              </ul>
-            </div>
-            
-            {/* Premium Plan */}
-            <div className={`${styles.pricingCard} ${styles.popularCard}`}>
-              <div className={styles.popularBadge}>Popular</div>
-              <h3 className={styles.cardTitle} style={{color: '#3b83f7'}}>Premium</h3>
-              <div className={styles.price}>
-                <span className={styles.amount}>$9.99</span>
-                <span className={styles.period}>/month</span>
-              </div>
-              <button className={`${styles.planButton} ${styles.btnPrimary}`}>
-                Upgrade Now
-              </button>
-              <ul className={styles.featuresList}>
-                <li><CheckIcon /><span>Unlimited Wishlists</span></li>
-                <li><CheckIcon /><span>Unlimited Items</span></li>
-                <li><CheckIcon /><span>Priority Support</span></li>
-              </ul>
-            </div>
-
-            {/* Ultimate Plan */}
-            <div className={styles.pricingCard}>
-              <h3 className={styles.cardTitle}>Ultimate</h3>
-              <div className={styles.price}>
-                <span className={styles.amount}>$19.99</span>
-                <span className={styles.period}>/month</span>
-              </div>
-              <button className={`${styles.planButton} ${styles.btnSecondary}`}>
-                Upgrade
-              </button>
-              <ul className={styles.featuresList}>
-                <li><CheckIcon /><span>All Premium Features</span></li>
-                <li><CheckIcon /><span>VIP Support</span></li>
-              </ul>
-            </div>
-          </div>
-        </section>
-
-        {/* --- Testimonials Section --- */}
-        <section className={`${styles.section} ${styles.reveal}`} id="testimonials">
-          <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>Loved by Thousands</h2>
-            <p className={styles.sectionText}>
-              See what our happy users are saying about using Presently for their special moments.
-            </p>
-          </div>
-          <div className={styles.testimonialGrid}>
-            {/* Testimonial 1 */}
-            <div className={styles.testimonialCard}>
-              <p className={styles.quote}>
-                "Presently made my wedding planning so much easier! Guests loved being able to see exactly what we wanted and marking it off. Highly recommend!"
-              </p>
-              <div className={styles.author}>
-                <img loading="lazy" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=100&auto=format&fit=crop" alt="Sarah M." className={styles.avatar} />
-                <div className={styles.authorInfo}>
-                  <h4>Sarah M.</h4>
-                  <span>Happy Bride</span>
-                </div>
-              </div>
-            </div>
-             {/* Testimonial 2 */}
-             <div className={styles.testimonialCard}>
-              <p className={styles.quote}>
-                "I used this for my 30th birthday bash. It was super simple to set up, and my friends found the interface very intuitive. The reservation feature is a lifesaver!"
-              </p>
-              <div className={styles.author}>
-                <img loading="lazy" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=100&auto=format&fit=crop" alt="James L." className={styles.avatar} />
-                <div className={styles.authorInfo}>
-                  <h4>James L.</h4>
-                  <span>Event Planner</span>
-                </div>
-              </div>
-            </div>
-             {/* Testimonial 3 */}
-             <div className={styles.testimonialCard}>
-              <p className={styles.quote}>
-                "Finally, a wishlist app that actually looks good and works well on mobile. My family isn't tech-savvy, but they had no issues using Presently."
-              </p>
-              <div className={styles.author}>
-                <img loading="lazy" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=100&auto=format&fit=crop" alt="Emily R." className={styles.avatar} />
-                <div className={styles.authorInfo}>
-                  <h4>Emily R.</h4>
-                  <span>Mom of Two</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* --- FAQs Section --- */}
-        <section className={`${styles.section} ${styles.reveal}`} id="faqs">
-          <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>Frequently Asked Questions</h2>
-            <p className={styles.sectionText}>
-              Have questions? We have answers.
-            </p>
-          </div>
-          <div className={styles.faqContainer}>
-            {faqs.map((faq, index) => (
-              <div 
-                key={index} 
-                className={`${styles.faqItem} ${openFaqIndex === index ? styles.active : ''}`}
+      {/* --- FAQ SECTION --- */}
+      <section id="faq" className={styles.faq}>
+        <div className={`${styles.reveal}`} ref={addToRefs}>
+          <h2>Frequently Asked Questions</h2>
+        </div>
+        <div className={styles.faqList}>
+          {faqs.map((faq, index) => (
+            <div key={index} className={`${styles.faqItem} ${styles.reveal}`} ref={addToRefs}>
+              <button 
+                className={styles.faqQuestion} 
                 onClick={() => toggleFaq(index)}
               >
-                <div className={styles.faqHeader}>
-                  <h3 className={styles.faqQuestion}>{faq.question}</h3>
-                  <span className={styles.faqIcon}>
-                    <svg 
-                      width="20" 
-                      height="20" 
-                      viewBox="0 0 24 24" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      strokeWidth="2" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round"
-                      className={openFaqIndex === index ? styles.rotateIcon : ''}
-                    >
-                      <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                  </span>
-                </div>
-                {openFaqIndex === index && (
-                  <div className={styles.faqContent}>
-                    <p className={styles.faqAnswer}>{faq.answer}</p>
-                  </div>
-                )}
+                {faq.question}
+                {openFaq === index ? <ChevronUp size={20} className={styles.iconBlue} /> : <ChevronDown size={20} className={styles.iconBlue} />}
+              </button>
+              <div className={`${styles.faqAnswer} ${openFaq === index ? styles.show : ''}`}>
+                <p>{faq.answer}</p>
               </div>
-            ))}
-          </div>
-        </section>
-
-        {/* --- CTA Section --- */}
-        <section className={`${styles.section} ${styles.reveal}`}>
-            <div className={styles.ctaSection}>
-                <h2>Ready to Create Your Dream Wishlist?</h2>
-                <p>Sign up today and start planning your perfect event with Presently. It's free to get started!</p>
-                <Link to="/signup">
-                <button className={styles.ctaButtonWhite}>
-                    Get Started Now
-                </button>
-                </Link>
             </div>
-        </section>
-      </main>
+          ))}
+        </div>
+      </section>
+
+      {/* --- FOOTER --- */}
+      <footer className={styles.footer}>
+        <div className={styles.footerContent}>
+          <div className={styles.footerBrand}>
+            <div className={styles.logoContainer}>
+              <div className={styles.logoIcon}>
+                <Wallet size={22} color="white" />
+              </div>
+              <span className={styles.footerLogoText}>Presently</span>
+            </div>
+            
+            {/* TAGLINE: High Visibility */}
+            <p className={styles.tagline}>Making gifting simple and meaningful for everyone.</p>
+
+            {/* NEW GET STARTED BUTTON */}
+            <Link to="/signup" className={styles.footerCtaButton}>
+              Get Started
+            </Link>
+          </div>
+          
+          <div className={styles.footerLinks}>
+            <h4>PRODUCT</h4>
+            <a href="#features">Features</a>
+            <a href="#pricing">Pricing</a>
+          </div>
+
+          <div className={styles.footerLinks}>
+            <h4>SUPPORT</h4>
+            <a href="#faq">FAQ</a>
+            <Link to="/contact">Contact</Link>
+          </div>
+
+          <div className={styles.footerLinks}>
+            <h4>LEGAL</h4>
+            <Link to="/privacy">Privacy</Link>
+            <Link to="/terms">Terms</Link>
+          </div>
+        </div>
+        <div className={styles.copyright}>
+          © {new Date().getFullYear()} Presently. All rights reserved.
+        </div>
+      </footer>
     </div>
   );
 };
-
-// Check Icon Component
-const CheckIcon = () => (
-  <svg className={styles.checkIcon} fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-    <path clipRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" fillRule="evenodd"></path>
-  </svg>
-);
 
 export default HomePage;

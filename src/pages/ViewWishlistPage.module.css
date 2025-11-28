@@ -1,0 +1,225 @@
+.container {
+  min-height: 100vh;
+  background-color: #f9fafb;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #111827;
+}
+
+/* Loading & Error States */
+.loadingContainer, 
+.errorContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 1.25rem;
+  color: #6b7280;
+  background-color: #f9fafb;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 2rem;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.logoArea {
+  display: flex;
+  align-items: center;
+}
+
+.logoText {
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: #3b83f7;
+  letter-spacing: -0.025em;
+}
+
+.backLink {
+  color: #4b5563;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: all 0.2s;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+}
+
+.backLink:hover {
+  color: #3b83f7;
+  background-color: #eff6ff;
+}
+
+/* Main Content Area */
+.mainContent {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+
+/* List Header (Title, Desc, Date) */
+.listHeader {
+  text-align: center;
+  margin-bottom: 4rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.listHeader h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.description {
+  font-size: 1.125rem;
+  color: #4b5563;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.eventDate {
+  display: inline-flex;
+  align-items: center;
+  background-color: #eff6ff;
+  color: #2563eb;
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: 1px solid #dbeafe;
+}
+
+/* Items Grid */
+.itemsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+/* Item Card */
+.itemCard {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
+  height: 100%;
+}
+
+.itemCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.1);
+  border-color: #bfdbfe;
+}
+
+.itemIcon {
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
+  background-color: #f3f4f6;
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.itemCard:hover .itemIcon {
+  transform: scale(1.1);
+  background-color: #eff6ff;
+}
+
+.itemDetails {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.itemDetails h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: #111827;
+  line-height: 1.4;
+}
+
+.price {
+  display: block;
+  font-weight: 600;
+  color: #059669; /* Emerald Green */
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+}
+
+.itemLink {
+  display: inline-block;
+  background-color: #3b83f7;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  width: 100%;
+  margin-top: auto; /* Pushes button to bottom */
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.itemLink:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+}
+
+.itemLink:active {
+  transform: translateY(0);
+}
+
+/* Empty State */
+.emptyState {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 6rem 2rem;
+  background-color: white;
+  border: 2px dashed #e5e7eb;
+  border-radius: 1rem;
+}
+
+.emptyState p {
+  color: #6b7280;
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 640px) {
+  .header {
+    padding: 1rem;
+  }
+  
+  .listHeader h1 {
+    font-size: 2rem;
+  }
+  
+  .itemsGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}

@@ -1,38 +1,74 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
-// Layouts & Pages
-import Layout from './components/layout/Layout';
+// Import Pages
+import LandingPage from './pages/LandingPage';
 import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import CreateWishlistPage from './pages/CreateWishlistPage';
-import WishlistDetailsPage from './pages/WishlistDetailsPage';
-import PrivateRoute from './components/PrivateRoute';
+import ManageItemsPage from './pages/ManageItemsPage';
+// NEW: Import the View Page
+import ViewWishlistPage from './pages/ViewWishlistPage';
+
+// Styles
+import './App.css'; 
+
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+  const { currentUser, loading } = useAuth();
+  
+  if (loading) {
+    return <div className="loading-screen">Loading...</div>;
+  }
+  
+  return currentUser ? children : <Navigate to="/login" />;
+};
 
 function App() {
   return (
-    <>
-      <Toaster position="top-center" />
+    <AuthProvider>
       <Routes>
-        {/* Landing Page with Header/Footer */}
-        <Route path="/" element={<Layout><HomePage /></Layout>} />
-
-        {/* Auth Pages - NO LAYOUT (No Header/Footer) */}
-        <Route path="/login" element={<LoginPage />} />
+        {/* --- Public Routes --- */}
+        <Route path="/" element={<HomePage />} />
         <Route path="/signup" element={<SignupPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        
+        {/* NEW: View Wishlist (Public - Friends can see this!) */}
+        <Route path="/wishlist/:id" element={<ViewWishlistPage />} />
 
-        {/* Protected Routes (Require Login + Layout) */}
-        <Route path="/dashboard" element={<PrivateRoute><Layout><DashboardPage /></Layout></PrivateRoute>} />
-        <Route path="/create-wishlist" element={<PrivateRoute><Layout><CreateWishlistPage /></Layout></PrivateRoute>} />
+        {/* --- Private Routes (Login Required) --- */}
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/create-wishlist" 
+          element={
+            <ProtectedRoute>
+              <CreateWishlistPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/manage/:id" 
+          element={
+            <ProtectedRoute>
+              <ManageItemsPage />
+            </ProtectedRoute>
+          } 
+        />
 
-        {/* Public Wishlist View */}
-        <Route path="/presently/:name/:id" element={<Layout><WishlistDetailsPage /></Layout>} />
-        <Route path="/wishlist/:id" element={<Layout><WishlistDetailsPage /></Layout>} />
+        {/* Fallback Route */}
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
-    </>
+    </AuthProvider>
   );
 }
 
