@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
 import Logo from '../components/Logo';
-import styles from './auth.module.css'; // Using the shared auth styles
+import styles from './Auth.module.css'; // Using the shared auth styles
 
 const SignupPage = () => {
   const [email, setEmail] = useState('');
