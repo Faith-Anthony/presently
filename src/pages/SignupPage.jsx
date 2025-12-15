@@ -1,113 +1,164 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { toast } from 'react-hot-toast';
-import Logo from '../components/Logo';
-import styles from './Auth.module.css'; // Using the shared auth styles
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore'; 
+import { auth, db } from '../firebase/config';
+import styles from './Auth.module.css'; // Shared styles
+
+// Wallet Icon Component for the Logo
+const Wallet = ({ size = 24, color = "currentColor", ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>
+);
 
 const SignupPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  
-  const { signup, googleSignIn } = useAuth();
   const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      return toast.error('Passwords do not match');
-    }
-    
+    setError('');
     setLoading(true);
-    try {
-      await signup(email, password);
-      navigate('/create-wishlist');
-      toast.success('Account created successfully!');
-    } catch (error) {
-      toast.error('Failed to create account: ' + error.message);
-    }
-    setLoading(false);
-  };
 
-  const handleGoogleSignIn = async () => {
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords don't match");
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters");
+      setLoading(false);
+      return;
+    }
+
     try {
-      await googleSignIn();
-      navigate('/create-wishlist');
-    } catch (error) {
-      toast.error('Google Sign In Failed');
+      // Create Authentication User
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      const user = userCredential.user;
+
+      // Update Profile (Display Name)
+      await updateProfile(user, {
+        displayName: formData.name
+      });
+
+      // Create User Document in Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        uid: user.uid,
+        name: formData.name,
+        email: formData.email,
+        createdAt: new Date().toISOString()
+      }, { merge: true });
+
+      navigate('/dashboard');
+
+    } catch (err) {
+      console.error("Signup Error:", err);
+      if (err.code === 'auth/email-already-in-use') {
+        setError('This email is already registered. Please login.');
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Invalid email address format.');
+      } else if (err.code === 'auth/network-request-failed') {
+        setError('Network error. Please check your internet connection.');
+      } else {
+        setError('Failed to sign up: ' + err.message);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className={styles.container}>
-      <div className={styles.logoWrapper}>
-        <Logo />
-      </div>
-
       <div className={styles.card}>
-        <h2>Create an Account</h2>
+        <div className={styles.header}>
+          {/* Logo Section */}
+          <div className={styles.logoContainer}>
+            <div className={styles.logoIcon}>
+              <Wallet size={28} color="white" />
+            </div>
+            <span className={styles.logoText}>Presently</span>
+          </div>
+          <h2>Create an Account</h2>
+          <p>Join Presently to start managing your wishlists</p>
+        </div>
+
+        {error && <div className={styles.error}>{error}</div>}
+
         <form onSubmit={handleSubmit} className={styles.form}>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email Address"
-            className={styles.input}
-            required
-          />
-          
-          <div className={styles.inputWrapper}>
+          <div className={styles.formGroup}>
+            <label htmlFor="name">Full Name</label>
             <input
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              className={styles.input}
-              required
-            />
-            <button 
-              type="button" 
-              className={styles.toggleBtn}
-              onClick={() => setShowPassword(!showPassword)}
-            >
-               {showPassword ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-              )}
-            </button>
-          </div>
-
-          <div className={styles.inputWrapper}>
-            <input
-              type={showPassword ? "text" : "password"}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm Password"
-              className={styles.input}
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              placeholder="John Doe"
               required
             />
           </div>
 
-          <button type="submit" className={styles.submitButton} disabled={loading}>
-            {loading ? 'Signing up...' : 'Sign Up'}
+          <div className={styles.formGroup}>
+            <label htmlFor="email">Email Address</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="you@example.com"
+              required
+            />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="••••••••"
+              required
+            />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label htmlFor="confirmPassword">Confirm Password</label>
+            <input
+              type="password"
+              id="confirmPassword"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              placeholder="••••••••"
+              required
+            />
+          </div>
+
+          <button type="submit" className={styles.submitBtn} disabled={loading}>
+            {loading ? 'Creating Account...' : 'Sign Up'}
           </button>
         </form>
 
-        <div className={styles.divider}>
-          <span>OR</span>
+        <div className={styles.footer}>
+          <p>Already have an account? <Link to="/login">Log in</Link></p>
         </div>
-
-        <button onClick={handleGoogleSignIn} className={styles.googleButton}>
-          Sign Up with Google
-        </button>
-
-        <p className={styles.switchText}>
-          Already have an account? <Link to="/login" className={styles.link}>Log In</Link>
-        </p>
       </div>
     </div>
   );

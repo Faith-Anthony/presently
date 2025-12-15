@@ -141,7 +141,7 @@ const HomePage = () => {
         </div>
         
         <div className={styles.featureGrid}>
-          {/* Feature 1 - Updated Image */}
+          {/* Feature 1 */}
           <div className={`${styles.featureCard} ${styles.reveal}`} ref={addToRefs}>
             <div className={styles.imageWrapper}>
               <img 

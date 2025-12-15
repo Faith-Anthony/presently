@@ -1,115 +1,285 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { db } from '../firebase/config';
-import { doc, getDoc, collection, onSnapshot, query, orderBy, addDoc, deleteDoc, updateDoc, runTransaction } from 'firebase/firestore';
-import toast from 'react-hot-toast';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { db, auth } from '../firebase/config';
 import styles from './ManageItemsPage.module.css';
 
-import ItemForm from '../components/dashboard/ItemForm';
-import ScrollAnimationWrapper from '../components/ScrollAnimationWrapper';
+// --- Icons ---
+const TrashIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+);
+const EditIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+);
 
 const ManageItemsPage = () => {
-  const { id: wishlistId } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
-
   const [wishlist, setWishlist] = useState(null);
-  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showNewItemForm, setShowNewItemForm] = useState(false);
+  
+  // Edit & Delete States
+  const [editMode, setEditMode] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
 
+  // Form State
+  const [newItem, setNewItem] = useState({ 
+    name: '', 
+    price: '', 
+    currency: 'USD',
+    note: '', 
+    url: '' 
+  });
+
+  const currencies = [
+    { code: 'USD', symbol: '$' }, { code: 'EUR', symbol: '€' }, { code: 'GBP', symbol: '£' },
+    { code: 'CAD', symbol: 'C$' }, { code: 'AUD', symbol: 'A$' }, { code: 'JPY', symbol: '¥' },
+    { code: 'NGN', symbol: '₦' }, { code: 'INR', symbol: '₹' }, { code: 'ZAR', symbol: 'R' }
+  ];
+
+  // Fetch Data
   useEffect(() => {
-    // Fetch and verify wishlist ownership
-    const wishlistRef = doc(db, 'wishlists', wishlistId);
-    getDoc(wishlistRef).then(docSnap => {
-      if (docSnap.exists() && docSnap.data().userId === currentUser.uid) {
-        setWishlist(docSnap.data());
-      } else {
-        navigate('/dashboard');
+    const fetchWishlist = async () => {
+      if (!auth.currentUser) return navigate('/login');
+      try {
+        const docRef = doc(db, 'wishlists', id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setWishlist({ id: docSnap.id, ...docSnap.data() });
+        } else {
+          navigate('/dashboard');
+        }
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        setLoading(false);
       }
-    });
+    };
+    fetchWishlist();
+  }, [id, navigate]);
 
-    // Listen for item changes
-    const itemsRef = collection(db, 'wishlists', wishlistId, 'items');
-    const q = query(itemsRef, orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, snapshot => {
-      setItems(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, [wishlistId, currentUser, navigate]);
+  // --- Add / Update Logic ---
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!newItem.name) return;
 
-  const updateItemCount = async (increment) => {
-    const wishlistRef = doc(db, 'wishlists', wishlistId);
-    await runTransaction(db, async (transaction) => {
-      const sfDoc = await transaction.get(wishlistRef);
-      if (!sfDoc.exists()) { throw "Document does not exist!"; }
-      const newCount = (sfDoc.data().itemCount || 0) + increment;
-      transaction.update(wishlistRef, { itemCount: Math.max(0, newCount) });
-    });
-  };
+    const selectedCurrency = currencies.find(c => c.code === newItem.currency) || currencies[0];
+    const formattedPrice = newItem.price ? `${selectedCurrency.symbol}${newItem.price} ${newItem.currency}` : '';
 
-  const handleSaveItem = async (itemId, itemData) => {
-    const itemRef = doc(db, 'wishlists', wishlistId, 'items', itemId);
-    await updateDoc(itemRef, itemData);
-    toast.success("Item saved!");
-  };
+    try {
+      const docRef = doc(db, 'wishlists', id);
+      let updatedItems;
 
-  const handleDeleteItem = async (itemId) => {
-    const itemRef = doc(db, 'wishlists', wishlistId, 'items', itemId);
-    await deleteDoc(itemRef);
-    await updateItemCount(-1);
-    toast.success("Item deleted.");
-  };
+      if (editMode) {
+        // UPDATE EXISTING ITEM
+        updatedItems = wishlist.items.map(item => {
+          if (item.id === editingId) {
+            return { ...item, ...newItem, formattedPrice };
+          }
+          return item;
+        });
+      } else {
+        // ADD NEW ITEM
+        const itemToAdd = {
+          id: Date.now().toString(),
+          ...newItem,
+          formattedPrice,
+          reserved: false, // Default is NOT reserved
+          purchased: false
+        };
+        updatedItems = [...(wishlist.items || []), itemToAdd];
+      }
 
-  const handleAddNewItem = async (itemData) => {
-    if (items.length >= 5) {
-      toast.error("Free Plan Limit: You can only have 5 items per wishlist.");
-      return;
+      await updateDoc(docRef, { items: updatedItems, itemCount: updatedItems.length });
+      
+      setWishlist(prev => ({ ...prev, items: updatedItems, itemCount: updatedItems.length }));
+      resetForm();
+
+    } catch (error) {
+      console.error("Error saving item:", error);
+      alert("Failed to save item");
     }
-    const itemsRef = collection(db, 'wishlists', wishlistId, 'items');
-    await addDoc(itemsRef, { ...itemData, status: 'unpicked', createdAt: new Date() });
-    await updateItemCount(1);
-    setShowNewItemForm(false);
-    toast.success("New item added!");
+  };
+
+  // --- Edit Logic ---
+  const startEdit = (item) => {
+    setNewItem({
+      name: item.name,
+      price: item.price || '',
+      currency: item.currency || 'USD',
+      note: item.note || '',
+      url: item.url || ''
+    });
+    setEditingId(item.id);
+    setEditMode(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const resetForm = () => {
+    setNewItem({ name: '', price: '', currency: 'USD', note: '', url: '' });
+    setEditMode(false);
+    setEditingId(null);
+  };
+
+  // --- Delete Logic ---
+  const promptDelete = (item) => {
+    setItemToDelete(item);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+    try {
+      const updatedItems = wishlist.items.filter(item => item.id !== itemToDelete.id);
+      await updateDoc(doc(db, 'wishlists', id), { 
+        items: updatedItems,
+        itemCount: updatedItems.length 
+      });
+      setWishlist(prev => ({ ...prev, items: updatedItems, itemCount: updatedItems.length }));
+    } catch (error) {
+      console.error("Error deleting:", error);
+    } finally {
+      setShowDeleteModal(false);
+      setItemToDelete(null);
+    }
   };
 
   if (loading) return <div className={styles.loading}>Loading...</div>;
 
   return (
-    <div className={styles.pageContainer}>
-      <header className={styles.header}>
-        <button onClick={() => navigate('/dashboard')} className={styles.backButton}>&larr; Back to Dashboard</button>
-        <h2>Manage Items for "{wishlist?.name}"</h2>
-      </header>
-
-      <div className={styles.itemsList}>
-        <h3>Existing Items</h3>
-        {items.map(item => (
-          <ScrollAnimationWrapper key={item.id}>
-            <ItemForm
-              item={item}
-              onSave={(itemData) => handleSaveItem(item.id, itemData)}
-              onDelete={() => handleDeleteItem(item.id)}
-            />
-          </ScrollAnimationWrapper>
-        ))}
-        {items.length === 0 && !showNewItemForm && <p className={styles.noItemsText}>No items yet. Click below to add one!</p>}
-      </div>
-
-      {!showNewItemForm ? (
-        <button onClick={() => setShowNewItemForm(true)} className={styles.addNewButton}>+ Add New Item</button>
-      ) : (
-        <div className={styles.newItemSection}>
-          <h3>New Item</h3>
-          <ItemForm
-            isNew={true}
-            onSave={handleAddNewItem}
-            onCancel={() => setShowNewItemForm(false)}
-          />
+    <div className={styles.container}>
+      {/* Delete Modal */}
+      {showDeleteModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalBox}>
+            <h3>Remove Item?</h3>
+            <p>Are you sure you want to remove <strong>{itemToDelete?.name}</strong>?</p>
+            <div className={styles.modalActions}>
+              <button onClick={() => setShowDeleteModal(false)} className={styles.cancelBtn}>Cancel</button>
+              <button onClick={confirmDelete} className={styles.deleteConfirmBtn}>Yes, Remove</button>
+            </div>
+          </div>
         </div>
       )}
+
+      <div className={styles.header}>
+        <Link to="/dashboard" className={styles.backLink}>← Back to Dashboard</Link>
+        <h1>Manage: {wishlist?.name}</h1>
+      </div>
+
+      <div className={styles.contentGrid}>
+        {/* FORM */}
+        <div className={styles.formCard}>
+          <h3>{editMode ? 'Edit Item' : 'Add New Item'}</h3>
+          <form onSubmit={handleSubmit}>
+            <div className={styles.formGroup}>
+              <label>Item Name</label>
+              <input 
+                type="text" 
+                value={newItem.name}
+                onChange={(e) => setNewItem({...newItem, name: e.target.value})}
+                placeholder="e.g. Coffee Maker"
+                required
+              />
+            </div>
+            
+            <div className={styles.formGroup}>
+              <label>Price</label>
+              <div className={styles.priceInputGroup}>
+                <select
+                  className={styles.currencySelect}
+                  value={newItem.currency}
+                  onChange={(e) => setNewItem({...newItem, currency: e.target.value})}
+                >
+                  {currencies.map(c => <option key={c.code} value={c.code}>{c.code}</option>)}
+                </select>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  className={styles.priceInput}
+                  value={newItem.price}
+                  onChange={(e) => setNewItem({...newItem, price: e.target.value})}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Link (Optional)</label>
+              <input 
+                type="url" 
+                value={newItem.url}
+                onChange={(e) => setNewItem({...newItem, url: e.target.value})}
+                placeholder="https://..."
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label>Note (Optional)</label>
+              <textarea 
+                value={newItem.note}
+                onChange={(e) => setNewItem({...newItem, note: e.target.value})}
+                placeholder="Size, Color, etc."
+              />
+            </div>
+
+            <button type="submit" className={editMode ? styles.updateBtn : styles.addBtn}>
+              {editMode ? 'Update Item' : 'Add Item'}
+            </button>
+            
+            {editMode && (
+              <button type="button" onClick={resetForm} className={styles.cancelEditBtn}>
+                Cancel Edit
+              </button>
+            )}
+          </form>
+        </div>
+
+        {/* ITEMS LIST */}
+        <div className={styles.itemsList}>
+          <h3>Your Items ({wishlist?.items?.length || 0})</h3>
+          
+          {(!wishlist?.items || wishlist.items.length === 0) ? (
+            <div className={styles.emptyState}>No items yet. Add one!</div>
+          ) : (
+            <div className={styles.list}>
+              {wishlist.items.map(item => (
+                <div key={item.id} className={`
+                  ${styles.itemCard} 
+                  ${editingId === item.id ? styles.highlight : ''} 
+                  ${item.reserved ? styles.reservedCard : ''}
+                `}>
+                  <div className={styles.itemInfo}>
+                    <div className={styles.titleRow}>
+                      <h4>{item.name}</h4>
+                      {/* Badge shows up if reserved */}
+                      {item.reserved && (
+                        <span className={styles.reservedBadge}>
+                          Reserved by {item.reservedBy}
+                        </span>
+                      )}
+                    </div>
+                    {(item.formattedPrice) && <span className={styles.price}>{item.formattedPrice}</span>}
+                    {item.note && <p className={styles.note}>{item.note}</p>}
+                    {item.url && <a href={item.url} target="_blank" rel="noreferrer" className={styles.link}>View Link</a>}
+                  </div>
+                  
+                  <div className={styles.actionButtons}>
+                    <button onClick={() => startEdit(item)} className={styles.editBtn} title="Edit">
+                      <EditIcon />
+                    </button>
+                    <button onClick={() => promptDelete(item)} className={styles.deleteBtn} title="Delete">
+                      <TrashIcon />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

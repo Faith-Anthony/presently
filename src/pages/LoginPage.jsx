@@ -1,122 +1,105 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import Logo from '../components/Logo';
-import styles from './Auth.module.css'; // Importing the shared auth styles
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebase/config';
+import styles from './Auth.module.css'; // Shared styles
+
+// Wallet Icon Component for the Logo
+const Wallet = ({ size = 24, color = "currentColor", ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>
+);
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  
-  const { login, googleSignIn } = useAuth(); 
   const navigate = useNavigate();
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
 
     try {
-      setError('');
-      setLoading(true);
-      await login(email, password);
+      await signInWithEmailAndPassword(auth, formData.email, formData.password);
       navigate('/dashboard');
     } catch (err) {
-      console.error(err);
-      setError('Failed to log in. Please check your email and password.');
+      console.error("Login Error:", err);
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        setError('Invalid email or password.');
+      } else if (err.code === 'auth/too-many-requests') {
+        setError('Too many failed attempts. Please try again later.');
+      } else if (err.code === 'auth/network-request-failed') {
+        setError('Network error. Please check your internet connection.');
+      } else {
+        setError('Failed to log in. Please try again.');
+      }
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
-  };
-
-  const handleGoogleSignIn = async () => {
-    try {
-      setError('');
-      setLoading(true);
-      await googleSignIn();
-      navigate('/dashboard');
-    } catch (err) {
-      console.error(err);
-      setError('Failed to sign in with Google.');
-    }
-    setLoading(false);
   };
 
   return (
     <div className={styles.container}>
-      <div className={styles.logoWrapper}>
-         <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
-          <div style={{ backgroundColor: '#3b83f7', padding: '8px', borderRadius: '8px', display: 'flex' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20 7H4C2.89543 7 2 7.89543 2 9V19C2 20.1046 2.89543 21 4 21H20C21.1046 21 22 20.1046 22 19V9C22 7.89543 21.1046 7 20 7Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M16 21V5C16 4.46957 15.7893 3.96086 15.4142 3.58579C15.0391 3.21071 14.5304 3 14 3H10C9.46957 3 8.96086 3.21071 8.58579 3.58579C8.21071 3.96086 8 4.46957 8 5V21" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <span style={{ fontSize: '1.25rem', fontWeight: '800', color: '#111418' }}>Presently</span>
-        </Link>
-      </div>
-
       <div className={styles.card}>
-        <h2>Welcome Back!</h2>
-        
-        {error && <div style={{ color: '#dc2626', marginBottom: '1rem', textAlign: 'center', fontSize: '0.9rem', backgroundColor: '#fee2e2', padding: '0.5rem', borderRadius: '0.375rem' }}>{error}</div>}
+        <div className={styles.header}>
+          {/* Logo Section */}
+          <div className={styles.logoContainer}>
+            <div className={styles.logoIcon}>
+              <Wallet size={28} color="white" />
+            </div>
+            <span className={styles.logoText}>Presently</span>
+          </div>
+          <h2>Welcome Back</h2>
+          <p>Log in to access your wishlists</p>
+        </div>
+
+        {error && <div className={styles.error}>{error}</div>}
 
         <form onSubmit={handleSubmit} className={styles.form}>
-          {/* Email Input */}
-          <input
-            type="email"
-            placeholder="Email Address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className={styles.input}
-          />
-          
-          {/* Password Input with Toggle */}
-          <div className={styles.inputWrapper}>
+          <div className={styles.formGroup}>
+            <label htmlFor="email">Email Address</label>
             <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="you@example.com"
               required
-              className={styles.input}
             />
-            <button 
-              type="button" 
-              className={styles.toggleBtn}
-              onClick={() => setShowPassword(!showPassword)}
-              aria-label="Toggle password visibility"
-            >
-              {showPassword ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-              )}
-            </button>
           </div>
 
-          <button disabled={loading} type="submit" className={styles.submitButton}>
-            {loading ? 'Logging In...' : 'Log In'}
+          <div className={styles.formGroup}>
+            <label htmlFor="password">Password</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="••••••••"
+              required
+            />
+          </div>
+
+          <button type="submit" className={styles.submitBtn} disabled={loading}>
+            {loading ? 'Logging in...' : 'Log In'}
           </button>
         </form>
 
-        <div className={styles.divider}>
-          <span>OR</span>
-        </div>
-
-        <button 
-          onClick={handleGoogleSignIn} 
-          disabled={loading}
-          className={styles.googleButton}
-        >
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style={{ width: '18px', height: '18px' }} />
-          Sign In with Google
-        </button>
-
-        <div className={styles.switchText}>
-          Don't have an account? <Link to="/signup" className={styles.link}>Sign Up</Link>
+        <div className={styles.footer}>
+          <p>Don't have an account? <Link to="/signup">Sign up</Link></p>
         </div>
       </div>
     </div>

@@ -1,80 +1,107 @@
+/* --- Shared Auth Layout --- */
 .container {
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #f3f4f6; /* Single light gray background */
+  background-color: #f3f4f6;
   padding: 1rem;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-}
-
-.logoWrapper {
-  margin-bottom: 2rem;
-  text-align: center;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 .card {
-  background-color: white;
+  background: white;
+  width: 100%;
+  max-width: 420px;
   padding: 2.5rem;
   border-radius: 1rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  width: 100%;
-  max-width: 400px;
+  text-align: center;
 }
 
-.card h2 {
-  text-align: center;
+/* --- Header Section --- */
+.header {
+  margin-bottom: 2rem;
+}
+
+.logoContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Matches Homepage Logo Style */
+.logoIcon {
+  background-color: #3b83f7;
+  color: white;
+  border-radius: 50%;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(59, 131, 247, 0.3);
+}
+
+.logoText {
+  font-size: 1.75rem;
+  font-weight: 800;
   color: #111827;
-  margin-bottom: 0.5rem;
+  letter-spacing: -0.025em;
+}
+
+.header h2 {
   font-size: 1.5rem;
   font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.5rem;
 }
 
+.header p {
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+/* --- Form Styles --- */
 .form {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  margin-top: 1.5rem;
+  text-align: left;
 }
 
-.inputWrapper {
-  position: relative;
+.formGroup {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.input {
-  width: 100%;
-  padding: 0.75rem 1rem;
+.formGroup label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.formGroup input {
+  padding: 0.75rem;
   border: 1px solid #d1d5db;
   border-radius: 0.5rem;
-  font-size: 0.95rem;
-  transition: border-color 0.2s;
-  box-sizing: border-box;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.input:focus {
+.formGroup input:focus {
   outline: none;
   border-color: #3b83f7;
   box-shadow: 0 0 0 3px rgba(59, 131, 247, 0.1);
 }
 
-.toggleBtn {
-  position: absolute;
-  right: 10px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #6b7280;
-  display: flex;
-  align-items: center;
-}
-
-.submitButton {
+.submitBtn {
   background-color: #3b83f7;
   color: white;
-  padding: 0.75rem;
+  padding: 0.875rem;
   border: none;
   border-radius: 0.5rem;
   font-weight: 600;
@@ -84,67 +111,42 @@
   margin-top: 0.5rem;
 }
 
-.submitButton:hover {
+.submitBtn:hover {
   background-color: #2563eb;
 }
 
-.submitButton:disabled {
-  opacity: 0.7;
+.submitBtn:disabled {
+  background-color: #9ca3af;
   cursor: not-allowed;
 }
 
-.divider {
-  display: flex;
-  align-items: center;
-  margin: 1.5rem 0;
-  color: #9ca3af;
-  font-size: 0.875rem;
-}
-
-.divider::before,
-.divider::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.divider span {
-  padding: 0 0.75rem;
-}
-
-.googleButton {
-  width: 100%;
-  background-color: white;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.googleButton:hover {
-  background-color: #f9fafb;
-}
-
-.switchText {
-  margin-top: 1.5rem;
-  text-align: center;
-  font-size: 0.9rem;
+/* --- Footer & Links --- */
+.footer {
+  margin-top: 2rem;
+  font-size: 0.95rem;
   color: #6b7280;
 }
 
-.link {
+.footer a {
   color: #3b83f7;
   text-decoration: none;
   font-weight: 600;
+  transition: color 0.2s;
 }
 
-.link:hover {
+.footer a:hover {
+  color: #2563eb;
   text-decoration: underline;
+}
+
+/* --- Error Message --- */
+.error {
+  background-color: #fee2e2;
+  color: #ef4444;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  text-align: left;
+  border: 1px solid #fecaca;
 }
