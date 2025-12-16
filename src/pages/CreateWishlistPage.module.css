@@ -1,12 +1,14 @@
+/* --- Main Layout --- */
 .container {
   max-width: 600px;
   width: 95%;
   margin: 0 auto;
   padding: 3rem 0;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   color: #1f2937;
 }
 
+/* --- Header --- */
 .header {
   text-align: center;
   margin-bottom: 2.5rem;
@@ -19,6 +21,7 @@
   text-decoration: none;
   font-size: 0.9rem;
   font-weight: 500;
+  transition: color 0.2s;
 }
 
 .backLink:hover {
@@ -35,20 +38,23 @@
 .header p {
   color: #6b7280;
   margin: 0;
+  font-size: 1.05rem;
 }
 
+/* --- Form Card --- */
 .formCard {
   background: white;
-  padding: 2rem;
+  padding: 2.5rem;
   border-radius: 1rem;
   border: 1px solid #e5e7eb;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
 }
 
 .formGroup {
   margin-bottom: 1.5rem;
 }
 
+/* Row for side-by-side inputs */
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -57,23 +63,25 @@
 
 .formGroup label {
   display: block;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: #374151;
   margin-bottom: 0.5rem;
 }
 
+/* Inputs & Selects */
 .formGroup input, 
 .formGroup select, 
 .formGroup textarea {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.875rem;
   border: 1px solid #d1d5db;
   border-radius: 0.5rem;
   font-size: 1rem;
   font-family: inherit;
-  box-sizing: border-box;
+  box-sizing: border-box; /* Critical for padding calculation */
   transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: #fff;
 }
 
 .formGroup input:focus, 
@@ -84,32 +92,42 @@
   box-shadow: 0 0 0 3px rgba(59, 131, 247, 0.1);
 }
 
+/* Submit Button */
 .submitBtn {
   width: 100%;
   background-color: #3b83f7;
   color: white;
-  padding: 0.875rem;
+  padding: 1rem;
   border: none;
   border-radius: 0.5rem;
-  font-weight: 600;
-  font-size: 1rem;
+  font-weight: 700;
+  font-size: 1.05rem;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
   margin-top: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(59, 131, 247, 0.2);
 }
 
 .submitBtn:hover {
   background-color: #2563eb;
+  transform: translateY(-1px);
 }
 
 .submitBtn:disabled {
   background-color: #9ca3af;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
+/* Mobile Responsiveness */
 @media (max-width: 640px) {
   .row {
     grid-template-columns: 1fr;
     gap: 0;
+  }
+  
+  .formCard {
+    padding: 1.5rem;
   }
 }

@@ -13,6 +13,9 @@ const ViewWishlistPage = () => {
   const [showReserveModal, setShowReserveModal] = useState(false);
   const [itemToReserve, setItemToReserve] = useState(null);
   const [reserverName, setReserverName] = useState('');
+  
+  // Success State for Modal
+  const [reservationSuccess, setReservationSuccess] = useState(false);
 
   // Toast Notification State
   const [toast, setToast] = useState(null);
@@ -36,7 +39,37 @@ const ViewWishlistPage = () => {
     fetchWishlist();
   }, [id]);
 
-  // Helper to show temporary notification
+  // --- Helper: Safely Format Date ---
+  const formatDate = (dateVal) => {
+    if (!dateVal) return 'TBA';
+    // Handle Firestore Timestamp
+    if (dateVal.toDate && typeof dateVal.toDate === 'function') {
+      return dateVal.toDate().toLocaleDateString();
+    }
+    // Handle String or standard Date Object
+    const date = new Date(dateVal);
+    if (isNaN(date.getTime())) return 'TBA';
+    return date.toLocaleDateString();
+  };
+
+  // --- Helper: Generate Google Calendar Link ---
+  const getGoogleCalendarUrl = () => {
+    if (!wishlist || !wishlist.eventDate || !itemToReserve) return null;
+
+    // Format date to YYYYMMDD for Google (All day event)
+    const dateObj = new Date(wishlist.eventDate);
+    if (isNaN(dateObj.getTime())) return null;
+
+    const dateStr = dateObj.toISOString().replace(/-|:|\.\d\d\d/g, "").substring(0, 8);
+    
+    const title = encodeURIComponent(`Buy Gift: ${itemToReserve.name}`);
+    const details = encodeURIComponent(`Reminder to buy the gift for ${wishlist.name}. Reserved on Presently.`);
+    const location = encodeURIComponent("See Wishlist Link");
+
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dateStr}/${dateStr}&details=${details}&location=${location}`;
+  };
+
+  // --- Helper: Toast Notification ---
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000); // Disappear after 3 seconds
@@ -44,7 +77,16 @@ const ViewWishlistPage = () => {
 
   const handleReserveClick = (item) => {
     setItemToReserve(item);
+    setReservationSuccess(false); // Reset success state
     setShowReserveModal(true);
+  };
+
+  // Close everything and reset
+  const handleCloseModal = () => {
+    setShowReserveModal(false);
+    setReservationSuccess(false);
+    setReserverName('');
+    setItemToReserve(null);
   };
 
   const confirmReserve = async (e) => {
@@ -52,29 +94,20 @@ const ViewWishlistPage = () => {
     if (!reserverName.trim() || !itemToReserve) return;
 
     try {
-      // Create a new items array with the specific item updated
+      // Optimistic UI Update logic
       const updatedItems = wishlist.items.map(item => {
         if (item.id === itemToReserve.id) {
-          // Preserve any existing properties like 'purchased' or other metadata
           return { ...item, reserved: true, reservedBy: reserverName };
         }
         return item;
       });
 
-      // Update Firestore
       await updateDoc(doc(db, 'wishlists', id), { items: updatedItems });
-      
-      // Update Local State
       setWishlist(prev => ({ ...prev, items: updatedItems }));
       
-      // Close Modal & Reset
-      setShowReserveModal(false);
-      setReserverName('');
-      setItemToReserve(null);
+      // Instead of closing, switch to Success View
+      setReservationSuccess(true);
       
-      // Show Success Toast
-      showToast(`Success! You reserved the ${itemToReserve.name}`);
-
     } catch (error) {
       console.error("Error reserving:", error);
       showToast("Failed to reserve item. Please try again.", 'error');
@@ -86,7 +119,7 @@ const ViewWishlistPage = () => {
 
   return (
     <div className={styles.container}>
-      {/* --- Toast Notification Component --- */}
+      {/* --- Toast Notification --- */}
       {toast && (
         <div className={`${styles.toast} ${toast.type === 'error' ? styles.toastError : ''}`}>
           {toast.message}
@@ -97,35 +130,66 @@ const ViewWishlistPage = () => {
       {showReserveModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalBox}>
-            <h3>Reserve Item</h3>
-            <p>Enter your name to reserve <strong>{itemToReserve?.name}</strong>.</p>
-            <p className={styles.modalSubtext}>This lets others know it's been taken.</p>
             
-            <form onSubmit={confirmReserve}>
-              <input 
-                type="text" 
-                className={styles.modalInput}
-                placeholder="Your Name (e.g. Aunt May)"
-                value={reserverName}
-                onChange={(e) => setReserverName(e.target.value)}
-                required
-              />
-              <div className={styles.modalActions}>
-                <button type="button" onClick={() => setShowReserveModal(false)} className={styles.cancelBtn}>Cancel</button>
-                <button type="submit" className={styles.reserveConfirmBtn}>Confirm Reservation</button>
+            {!reservationSuccess ? (
+              // 1. FORM VIEW
+              <>
+                <h3>Reserve Item</h3>
+                <p>Enter your name to reserve <strong>{itemToReserve?.name}</strong>.</p>
+                <p className={styles.modalSubtext}>This lets others know it's been taken.</p>
+                
+                <form onSubmit={confirmReserve}>
+                  <input 
+                    type="text" 
+                    className={styles.modalInput}
+                    placeholder="Your Name (e.g. Aunt May)"
+                    value={reserverName}
+                    onChange={(e) => setReserverName(e.target.value)}
+                    required
+                  />
+                  <div className={styles.modalActions}>
+                    <button type="button" onClick={handleCloseModal} className={styles.cancelBtn}>Cancel</button>
+                    <button type="submit" className={styles.reserveConfirmBtn}>Confirm Reservation</button>
+                  </div>
+                </form>
+              </>
+            ) : (
+              // 2. SUCCESS VIEW (With Calendar Button)
+              <div className={styles.successView}>
+                <div className={styles.checkIcon}>✓</div>
+                <h3>Reserved Successfully!</h3>
+                <p>Thanks {reserverName}! You have reserved <strong>{itemToReserve?.name}</strong>.</p>
+                
+                {wishlist.eventDate && getGoogleCalendarUrl() && (
+                  <a 
+                    href={getGoogleCalendarUrl()} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className={styles.calendarBtn}
+                  >
+                    📅 Add Reminder to Google Calendar
+                  </a>
+                )}
+
+                <button onClick={handleCloseModal} className={styles.closeSuccessBtn}>
+                  Done
+                </button>
               </div>
-            </form>
+            )}
+
           </div>
         </div>
       )}
 
+      {/* --- Header --- */}
       <div className={styles.header}>
         <h1>{wishlist.name}</h1>
-        <p>Event Date: {wishlist.eventDate ? new Date(wishlist.eventDate).toLocaleDateString() : 'TBA'}</p>
+        <p>Event Date: {formatDate(wishlist.eventDate)}</p>
         {wishlist.category && <div className={styles.categoryBadge}>{wishlist.category}</div>}
         {wishlist.description && <p className={styles.description}>{wishlist.description}</p>}
       </div>
 
+      {/* --- Items Grid --- */}
       <div className={styles.grid}>
         {wishlist.items.length === 0 ? (
           <div className={styles.emptyState}>
