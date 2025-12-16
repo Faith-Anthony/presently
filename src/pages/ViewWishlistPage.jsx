@@ -11,13 +11,16 @@ const ViewWishlistPage = () => {
   
   // Reserve Modal State
   const [showReserveModal, setShowReserveModal] = useState(false);
-  const [itemToReserve, setItemToReserve] = useState(null);
+  const [itemToInteract, setItemToInteract] = useState(null); // Renamed from itemToReserve
   const [reserverName, setReserverName] = useState('');
+  const [reserverPin, setReserverPin] = useState(''); // NEW: PIN for security
   
-  // Success State for Modal
+  // Unreserve Modal State
+  const [showUnreserveModal, setShowUnreserveModal] = useState(false);
+  const [unreservePin, setUnreservePin] = useState('');
+  
+  // Success State
   const [reservationSuccess, setReservationSuccess] = useState(false);
-
-  // Toast Notification State
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
@@ -39,78 +42,111 @@ const ViewWishlistPage = () => {
     fetchWishlist();
   }, [id]);
 
-  // --- Helper: Safely Format Date ---
   const formatDate = (dateVal) => {
     if (!dateVal) return 'TBA';
-    // Handle Firestore Timestamp
-    if (dateVal.toDate && typeof dateVal.toDate === 'function') {
-      return dateVal.toDate().toLocaleDateString();
-    }
-    // Handle String or standard Date Object
+    if (dateVal.toDate && typeof dateVal.toDate === 'function') return dateVal.toDate().toLocaleDateString();
     const date = new Date(dateVal);
-    if (isNaN(date.getTime())) return 'TBA';
-    return date.toLocaleDateString();
+    return isNaN(date.getTime()) ? 'TBA' : date.toLocaleDateString();
   };
 
-  // --- Helper: Generate Google Calendar Link ---
   const getGoogleCalendarUrl = () => {
-    if (!wishlist || !wishlist.eventDate || !itemToReserve) return null;
-
-    // Format date to YYYYMMDD for Google (All day event)
-    const dateObj = new Date(wishlist.eventDate);
+    if (!wishlist || !wishlist.eventDate || !itemToInteract) return null;
+    let dateObj = wishlist.eventDate.toDate ? wishlist.eventDate.toDate() : new Date(wishlist.eventDate);
     if (isNaN(dateObj.getTime())) return null;
-
     const dateStr = dateObj.toISOString().replace(/-|:|\.\d\d\d/g, "").substring(0, 8);
-    
-    const title = encodeURIComponent(`Buy Gift: ${itemToReserve.name}`);
+    const title = encodeURIComponent(`Buy Gift: ${itemToInteract.name}`);
     const details = encodeURIComponent(`Reminder to buy the gift for ${wishlist.name}. Reserved on Presently.`);
     const location = encodeURIComponent("See Wishlist Link");
-
     return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dateStr}/${dateStr}&details=${details}&location=${location}`;
   };
 
-  // --- Helper: Toast Notification ---
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 3000); // Disappear after 3 seconds
+    setTimeout(() => setToast(null), 3000);
   };
+
+  // --- ACTIONS ---
 
   const handleReserveClick = (item) => {
-    setItemToReserve(item);
-    setReservationSuccess(false); // Reset success state
+    setItemToInteract(item);
+    setReservationSuccess(false);
     setShowReserveModal(true);
+    setReserverName('');
+    setReserverPin('');
   };
 
-  // Close everything and reset
-  const handleCloseModal = () => {
+  const handleUnreserveClick = (item) => {
+    setItemToInteract(item);
+    setShowUnreserveModal(true);
+    setUnreservePin('');
+  };
+
+  const handleCloseModals = () => {
     setShowReserveModal(false);
+    setShowUnreserveModal(false);
     setReservationSuccess(false);
-    setReserverName('');
-    setItemToReserve(null);
+    setItemToInteract(null);
   };
 
   const confirmReserve = async (e) => {
     e.preventDefault();
-    if (!reserverName.trim() || !itemToReserve) return;
+    if (!reserverName.trim() || !itemToInteract || reserverPin.length < 4) {
+      showToast("Please enter a name and a 4-digit PIN.", 'error');
+      return;
+    }
 
     try {
-      // Optimistic UI Update logic
       const updatedItems = wishlist.items.map(item => {
-        if (item.id === itemToReserve.id) {
-          return { ...item, reserved: true, reservedBy: reserverName };
+        if (item.id === itemToInteract.id) {
+          // Store the PIN with the item (in a real app, you might hash this, but simple is okay for this use case)
+          return { 
+            ...item, 
+            reserved: true, 
+            reservedBy: reserverName,
+            reservationPin: reserverPin 
+          };
         }
         return item;
       });
 
       await updateDoc(doc(db, 'wishlists', id), { items: updatedItems });
       setWishlist(prev => ({ ...prev, items: updatedItems }));
-      
-      // Instead of closing, switch to Success View
       setReservationSuccess(true);
       
     } catch (error) {
       console.error("Error reserving:", error);
-      showToast("Failed to reserve item. Please try again.", 'error');
+      showToast("Failed to reserve item.", 'error');
+    }
+  };
+
+  const confirmUnreserve = async (e) => {
+    e.preventDefault();
+    if (!itemToInteract) return;
+
+    // Verify PIN
+    if (itemToInteract.reservationPin && itemToInteract.reservationPin !== unreservePin) {
+      showToast("Incorrect PIN. Cannot unreserve.", 'error');
+      return;
+    }
+
+    try {
+      const updatedItems = wishlist.items.map(item => {
+        if (item.id === itemToInteract.id) {
+          // Clear reservation data
+          const { reserved, reservedBy, reservationPin, ...rest } = item;
+          return { ...rest, reserved: false };
+        }
+        return item;
+      });
+
+      await updateDoc(doc(db, 'wishlists', id), { items: updatedItems });
+      setWishlist(prev => ({ ...prev, items: updatedItems }));
+      setShowUnreserveModal(false);
+      showToast("Item unreserved successfully.");
+      
+    } catch (error) {
+      console.error("Error unreserving:", error);
+      showToast("Failed to unreserve item.", 'error');
     }
   };
 
@@ -119,69 +155,88 @@ const ViewWishlistPage = () => {
 
   return (
     <div className={styles.container}>
-      {/* --- Toast Notification --- */}
-      {toast && (
-        <div className={`${styles.toast} ${toast.type === 'error' ? styles.toastError : ''}`}>
-          {toast.message}
-        </div>
-      )}
+      {toast && <div className={`${styles.toast} ${toast.type === 'error' ? styles.toastError : ''}`}>{toast.message}</div>}
 
-      {/* --- Reserve Modal --- */}
+      {/* --- RESERVE MODAL --- */}
       {showReserveModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalBox}>
-            
             {!reservationSuccess ? (
-              // 1. FORM VIEW
               <>
                 <h3>Reserve Item</h3>
-                <p>Enter your name to reserve <strong>{itemToReserve?.name}</strong>.</p>
-                <p className={styles.modalSubtext}>This lets others know it's been taken.</p>
+                <p>Reserving: <strong>{itemToInteract?.name}</strong></p>
                 
                 <form onSubmit={confirmReserve}>
                   <input 
                     type="text" 
                     className={styles.modalInput}
-                    placeholder="Your Name (e.g. Aunt May)"
+                    placeholder="Your Name"
                     value={reserverName}
                     onChange={(e) => setReserverName(e.target.value)}
                     required
                   />
+                  <input 
+                    type="text" 
+                    pattern="\d*" 
+                    maxLength="4"
+                    className={styles.modalInput}
+                    placeholder="Create a 4-digit PIN (if you want to unreserve this item)"
+                    value={reserverPin}
+                    onChange={(e) => setReserverPin(e.target.value)}
+                    required
+                  />
                   <div className={styles.modalActions}>
-                    <button type="button" onClick={handleCloseModal} className={styles.cancelBtn}>Cancel</button>
-                    <button type="submit" className={styles.reserveConfirmBtn}>Confirm Reservation</button>
+                    <button type="button" onClick={handleCloseModals} className={styles.cancelBtn}>Cancel</button>
+                    <button type="submit" className={styles.reserveConfirmBtn}>Confirm</button>
                   </div>
                 </form>
               </>
             ) : (
-              // 2. SUCCESS VIEW (With Calendar Button)
               <div className={styles.successView}>
                 <div className={styles.checkIcon}>✓</div>
-                <h3>Reserved Successfully!</h3>
-                <p>Thanks {reserverName}! You have reserved <strong>{itemToReserve?.name}</strong>.</p>
-                
+                <h3>Reserved!</h3>
+                <p>Thanks {reserverName}!</p>
+                <p className={styles.pinReminder}>Remember your PIN: <strong>{reserverPin}</strong></p>
                 {wishlist.eventDate && getGoogleCalendarUrl() && (
-                  <a 
-                    href={getGoogleCalendarUrl()} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    className={styles.calendarBtn}
-                  >
-                    📅 Add Reminder to Google Calendar
+                  <a href={getGoogleCalendarUrl()} target="_blank" rel="noreferrer" className={styles.calendarBtn}>
+                    📅 Add to Calendar
                   </a>
                 )}
-
-                <button onClick={handleCloseModal} className={styles.closeSuccessBtn}>
-                  Done
-                </button>
+                <button onClick={handleCloseModals} className={styles.closeSuccessBtn}>Done</button>
               </div>
             )}
-
           </div>
         </div>
       )}
 
-      {/* --- Header --- */}
+      {/* --- UNRESERVE MODAL --- */}
+      {showUnreserveModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalBox}>
+            <h3>Unreserve Item</h3>
+            <p>To release <strong>{itemToInteract?.name}</strong>, enter the PIN you created.</p>
+            
+            <form onSubmit={confirmUnreserve}>
+              <input 
+                type="text" 
+                pattern="\d*" 
+                maxLength="4"
+                className={styles.modalInput}
+                placeholder="Enter 4-digit PIN"
+                value={unreservePin}
+                onChange={(e) => setUnreservePin(e.target.value)}
+                required
+              />
+              <div className={styles.modalActions}>
+                <button type="button" onClick={handleCloseModals} className={styles.cancelBtn}>Cancel</button>
+                <button type="submit" className={styles.reserveConfirmBtn}>Unreserve</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- PAGE CONTENT --- */}
       <div className={styles.header}>
         <h1>{wishlist.name}</h1>
         <p>Event Date: {formatDate(wishlist.eventDate)}</p>
@@ -189,12 +244,9 @@ const ViewWishlistPage = () => {
         {wishlist.description && <p className={styles.description}>{wishlist.description}</p>}
       </div>
 
-      {/* --- Items Grid --- */}
       <div className={styles.grid}>
         {wishlist.items.length === 0 ? (
-          <div className={styles.emptyState}>
-            <p>No items have been added to this wishlist yet.</p>
-          </div>
+          <div className={styles.emptyState}><p>No items yet.</p></div>
         ) : (
           wishlist.items.map((item, index) => (
             <div key={index} className={`${styles.card} ${item.reserved ? styles.cardReserved : ''}`}>
@@ -204,17 +256,16 @@ const ViewWishlistPage = () => {
                 {item.note && <p className={styles.note}>{item.note}</p>}
                 
                 <div className={styles.buttonStack}>
-                  {/* View Link Button - ONLY renders if item.url exists and is not empty */}
                   {item.url && item.url.trim() !== "" && (
-                    <a href={item.url} target="_blank" rel="noreferrer" className={styles.viewBtn}>
-                      View Product
-                    </a>
+                    <a href={item.url} target="_blank" rel="noreferrer" className={styles.viewBtn}>View Product</a>
                   )}
 
-                  {/* Reserve Button Logic */}
                   {item.reserved ? (
-                    <button className={styles.reservedBtn} disabled>
-                      Reserved by {item.reservedBy}
+                    <button 
+                      onClick={() => handleUnreserveClick(item)} // Allow clicking to open Unreserve modal
+                      className={styles.reservedBtn}
+                    >
+                      Reserved by {item.reservedBy} (Undo?)
                     </button>
                   ) : (
                     <button onClick={() => handleReserveClick(item)} className={styles.reserveBtn}>
