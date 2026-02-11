@@ -1,68 +1,88 @@
-.hero {
+.heroSection {
   position: relative;
-  display: flex;
-  min-height: 60vh;
-  align-items: center;
-  justify-content: center;
-  background-image: linear-gradient(to bottom right, rgba(59, 131, 247, 0.1), transparent);
-  padding-top: 5rem;
-  padding-bottom: 5rem;
-}
-
-.container {
-  max-width: 80rem;
-  margin: 0 auto;
-  padding: 0 1rem;
+  padding: 100px 20px 80px;
   text-align: center;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+  /* Ensure it takes at least some height if content is short */
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
-.title {
-  font-size: 2.25rem;
-  font-weight: 800;
-  letter-spacing: -0.05em;
-  color: #111418;
+.content {
+  position: relative;
+  z-index: 2;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
-.subtitle {
-  max-width: 42rem;
-  margin: 1rem auto 0;
-  font-size: 1.125rem;
-  color: rgba(0, 0, 0, 0.6);
+.heroTitle {
+  font-size: 3.5rem;
+  font-weight: 900;
+  color: #1e293b;
+  margin-bottom: 20px;
+  line-height: 1.1;
 }
 
-.ctaButton {
-  margin-top: 3rem; 
-  transform: translateY(0);
-  padding: 0.75rem 2rem;
-  font-size: 1rem;
-  font-weight: 700;
+.heroSubtitle {
+  font-size: 1.2rem;
+  color: #64748b;
+  margin-bottom: 40px;
+}
+
+.heroBtn {
+  display: inline-block;
+  background: #4f46e5;
   color: white;
-  background-color: #3b83f7;
-  border-radius: 9999px;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 4px 14px 0 rgba(59, 131, 247, 0.2);
-  transition: all 0.3s ease;
+  padding: 16px 32px;
+  border-radius: 50px;
   text-decoration: none;
+  font-weight: bold;
+  font-size: 18px;
+  box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.ctaButton:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px 0 rgba(59, 131, 247, 0.4);
+.heroBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 20px -3px rgba(79, 70, 229, 0.4);
 }
 
-@media (min-width: 640px) {
-  .title {
-    font-size: 3rem;
-  }
+/* --- Animated Floating Objects --- */
+.animatedBg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
 }
-@media (min-width: 768px) {
-  .title {
-    font-size: 3.75rem;
-  }
+
+.floatingObj {
+  position: absolute;
+  opacity: 0;
+  animation: floatUp 15s infinite linear;
+  user-select: none;
 }
-@media (min-width: 1024px) {
-  .title {
-    font-size: 4.5rem;
-  }
+
+.obj1 { left: 10%; top: 110%; font-size: 80px; animation-duration: 20s; animation-delay: 0s; }
+.obj2 { left: 30%; top: 110%; font-size: 60px; animation-duration: 18s; animation-delay: 4s; }
+.obj3 { left: 70%; top: 110%; font-size: 90px; animation-duration: 22s; animation-delay: 2s; }
+.obj4 { left: 90%; top: 110%; font-size: 50px; animation-duration: 15s; animation-delay: 6s; }
+.obj5 { left: 50%; top: 110%; font-size: 70px; animation-duration: 25s; animation-delay: 8s; }
+
+@keyframes floatUp {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.15; }
+  90% { opacity: 0.15; }
+  100% { transform: translateY(-120vh) rotate(360deg); opacity: 0; }
+}
+
+@media (max-width: 600px) {
+  .heroTitle { font-size: 2.5rem; }
+  .heroSubtitle { font-size: 1rem; }
 }

@@ -107,7 +107,7 @@ const SignupPage = () => {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              placeholder="John Doe"
+              placeholder="Fainoch"
               required
             />
           </div>
@@ -120,7 +120,7 @@ const SignupPage = () => {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="you@example.com"
+              placeholder="you@gmail.com"
               required
             />
           </div>

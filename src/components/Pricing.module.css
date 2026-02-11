@@ -1,65 +1,161 @@
-.section { padding-top: 5rem; padding-bottom: 5rem; }
-.container { max-width: 80rem; margin: 0 auto; padding: 0 1rem; }
-.header { max-width: 48rem; margin: 0 auto 4rem; text-align: center; }
-.title { font-size: 1.875rem; font-weight: 700; letter-spacing: -0.025em; color: #111418; }
-.subtitle { margin-top: 1rem; font-size: 1.125rem; color: rgba(0, 0, 0, 0.6); }
-.grid { display: grid; gap: 2rem; }
-.card {
+.pricingSection {
+  padding: 80px 20px;
+  text-align: center;
+  background-color: #fff;
+}
+
+.sectionTitle {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 60px;
+  color: #1e293b;
+}
+
+.pricingGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 30px;
+  max-width: 1100px;
+  margin: 0 auto;
+  align-items: stretch;
+}
+
+.priceCard {
+  background: white;
+  padding: 40px 30px;
+  border-radius: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  border: 1px solid #e2e8f0;
   position: relative;
+  text-align: left;
+  transition: transform 0.2s, box-shadow 0.2s;
   display: flex;
   flex-direction: column;
-  padding: 1.5rem;
-  background-color: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
 }
-.popularCard {
-  border: 2px solid #3b83f7;
-  box-shadow: 0 10px 15px -3px rgba(59,131,247,0.2), 0 4px 6px -2px rgba(59,131,247,0.1);
+
+.priceCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
 }
-.popularTag {
+
+.priceCardFeatured {
+  border: 2px solid #4f46e5;
+  box-shadow: 0 20px 25px -5px rgba(79, 70, 229, 0.15);
+  z-index: 1;
+}
+
+.priceCardFeatured:hover {
+  transform: translateY(-5px);
+}
+
+.popularBadge {
   position: absolute;
-  top: -0.75rem;
-  right: 1.5rem;
-  padding: 0.25rem 0.75rem;
-  background-color: #3b83f7;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #4f46e5;
   color: white;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 700;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
 }
-.planName { font-size: 1.125rem; font-weight: 700; }
-.popularName { color: #3b83f7; }
-.priceContainer { margin: 1rem 0; }
-.price { font-size: 2.25rem; font-weight: 800; }
-.period { font-size: 0.875rem; font-weight: 500; color: rgba(0, 0, 0, 0.6); }
-.button {
-  width: 100%;
-  padding: 0.625rem 0;
-  border-radius: 9999px;
-  font-size: 0.875rem;
+
+.tierName {
+  font-size: 1.5rem;
   font-weight: 700;
-  border: none;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+
+.tierDesc {
+  color: #64748b;
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+  min-height: 24px;
+}
+
+.priceAmount {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 10px;
+  line-height: 1;
+}
+
+.period {
+  font-size: 1.125rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.featureList {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0 30px;
+  flex-grow: 1;
+}
+
+.featureItem {
+  padding: 10px 0;
+  color: #475569;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.featureItem:last-child {
+  border-bottom: none;
+}
+
+.cardBtnOutline {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  color: #1e293b;
+  text-decoration: none;
+  font-weight: 700;
+  text-align: center;
+  background: transparent;
   cursor: pointer;
   transition: all 0.2s;
 }
-.standardButton {
-  background-color: rgba(59, 131, 247, 0.1);
-  color: #3b83f7;
-}
-.standardButton:hover { background-color: rgba(59, 131, 247, 0.2); }
-.popularButton { background-color: #3b83f7; color: white; }
-.popularButton:hover { opacity: 0.9; }
-.featureList { margin-top: 1.5rem; flex-grow: 1; space-y: 0.75rem; list-style: none; padding: 0; }
-.featureItem { display: flex; align-items: center; gap: 0.75rem; font-size: 0.875rem; color: rgba(0,0,0,0.8); }
-.featureItem svg { color: #3b83f7; }
 
-@media (min-width: 640px) {
-  .section { padding-top: 7rem; padding-bottom: 7rem; }
-  .title { font-size: 2.25rem; }
+.cardBtnOutline:hover {
+  border-color: #1e293b;
+  background: #f8fafc;
 }
-@media (min-width: 768px) {
-  .grid { grid-template-columns: repeat(3, 1fr); }
+
+.cardBtnFill {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 16px;
+  text-align: center;
+  transition: background 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+}
+
+.cardBtnFill:hover {
+  background: #4338ca;
+  box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);
+}
+
+@media (max-width: 900px) {
+  .priceCardFeatured {
+    transform: none;
+    z-index: 0;
+  }
 }

@@ -1,70 +1,59 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import styles from './Pricing.module.css';
-import CheckIcon from './UI/CheckIcon';
 
 const Pricing = () => {
-  const plans = [
-    {
-      name: "Basic",
-      price: "Free",
-      buttonText: "Get Started",
-      features: ["Limited Wishlists", "Basic Item Tracking", "Standard Support"],
-      isPopular: false,
-    },
-    {
-      name: "Premium",
-      price: "$1.50",
-      period: "/month",
-      buttonText: "Upgrade Now",
-      features: ["All Basic Features", "Advanced Item Tracking", "Priority Support", "Customizable Themes"],
-      isPopular: true,
-    },
-    {
-      name: "Ultimate",
-      price: "$3.00",
-      period: "/month",
-      buttonText: "Upgrade",
-      features: ["All Premium Features", "VIP Support", "Exclusive Features", "Personalized Assistance"],
-      isPopular: false,
-    },
-  ];
-
   return (
-    <section id="pricing" className={styles.section}>
-      <div className={styles.container}>
-        <div className={styles.header}>
-          <h2 className={styles.title}>Choose Your Perfect Plan</h2>
-          <p className={styles.subtitle}>
-            Start for free and upgrade as your needs grow. Simple, transparent pricing for everyone.
-          </p>
+    <div className={styles.pricingSection}>
+      <h2 className={styles.sectionTitle}>Choose Your Plan</h2>
+      <div className={styles.pricingGrid}>
+        
+        {/* STARTER (Free) */}
+        <div className={styles.priceCard}>
+          <h3 className={styles.tierName}>Starter</h3>
+          <div className={styles.priceAmount}>$0<span className={styles.period}>/mo</span></div>
+          <p className={styles.tierDesc}>Perfect for trying things out.</p>
+          <ul className={styles.featureList}>
+            <li className={styles.featureItem}>✅ 2 Active Wishlists</li>
+            <li className={styles.featureItem}>✅ 5 Items per List</li>
+            <li className={styles.featureItem}>✅ Basic Sharing</li>
+          </ul>
+          <Link to="/dashboard" className={styles.cardBtnOutline}>Start Free</Link>
         </div>
-        <div className={styles.grid}>
-          {plans.map((plan) => (
-            <div key={plan.name} className={`${styles.card} ${plan.isPopular ? styles.popularCard : ''}`}>
-              {plan.isPopular && (
-                <div className={styles.popularTag}>Popular</div>
-              )}
-              <h3 className={`${styles.planName} ${plan.isPopular ? styles.popularName : ''}`}>{plan.name}</h3>
-              <p className={styles.priceContainer}>
-                <span className={styles.price}>{plan.price}</span>
-                {plan.period && <span className={styles.period}>{plan.period}</span>}
-              </p>
-              <button className={`${styles.button} ${plan.isPopular ? styles.popularButton : styles.standardButton}`}>
-                {plan.buttonText}
-              </button>
-              <ul className={styles.featureList}>
-                {plan.features.map((feature) => (
-                  <li key={feature} className={styles.featureItem}>
-                    <CheckIcon />
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+
+        {/* STANDARD */}
+        <div className={`${styles.priceCard} ${styles.priceCardFeatured}`}>
+          <div className={styles.popularBadge}>Most Popular</div>
+          <h3 className={styles.tierName}>Standard</h3>
+          <div className={styles.priceAmount}>$5<span className={styles.period}>/mo</span></div>
+          <p className={styles.tierDesc}>For the avid wish-lister.</p>
+          <ul className={styles.featureList}>
+            <li className={styles.featureItem}>✅ Unlimited Wishlists</li>
+            <li className={styles.featureItem}>✅ 50 Items per List</li>
+            <li className={styles.featureItem}>✅ Password Protection</li>
+          </ul>
+          <button className={styles.cardBtnFill} onClick={() => alert("Standard plan coming soon!")}>
+            Go Standard
+          </button>
         </div>
+
+        {/* PREMIUM */}
+        <div className={styles.priceCard}>
+          <h3 className={styles.tierName}>Premium</h3>
+          <div className={styles.priceAmount}>$12<span className={styles.period}>/mo</span></div>
+          <p className={styles.tierDesc}>The ultimate experience.</p>
+          <ul className={styles.featureList}>
+            <li className={styles.featureItem}>✅ Unlimited Everything</li>
+            <li className={styles.featureItem}>✅ Custom Themes</li>
+            <li className={styles.featureItem}>✅ Priority Support</li>
+          </ul>
+          <button className={styles.cardBtnOutline} onClick={() => alert("Premium plan coming soon!")}>
+            Go Premium
+          </button>
+        </div>
+
       </div>
-    </section>
+    </div>
   );
 };
 

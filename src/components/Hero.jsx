@@ -4,20 +4,27 @@ import styles from './Hero.module.css';
 
 const Hero = () => {
   return (
-    <section className={styles.hero}>
-      <div className={styles.container}>
-        <h1 className={styles.title}>
-          Create & Share Your Perfect Wishlist
-        </h1>
-        <p className={styles.subtitle}>
-          Plan your dream events with ease. From birthdays to weddings, Presently helps you curate and share your ideal gifts with friends and family.
+    <div className={styles.heroSection}>
+      {/* Animated Background Layer */}
+      <div className={styles.animatedBg}>
+        <div className={`${styles.floatingObj} ${styles.obj1}`}>🎁</div>
+        <div className={`${styles.floatingObj} ${styles.obj2}`}>✨</div>
+        <div className={`${styles.floatingObj} ${styles.obj3}`}>🎈</div>
+        <div className={`${styles.floatingObj} ${styles.obj4}`}>🎁</div>
+        <div className={`${styles.floatingObj} ${styles.obj5}`}>✨</div>
+      </div>
+
+      {/* Main Content */}
+      <div className={styles.content}>
+        <h1 className={styles.heroTitle}>Make Wishes Come True.</h1>
+        <p className={styles.heroSubtitle}>
+          Create, share, and manage your dream wishlists with ease. No more guessing games.
         </p>
-        {/* 2. Replace <button> with <Link> */}
-        <Link to="/signup" className={styles.ctaButton}>
+        <Link to="/dashboard" className={styles.heroBtn}>
           Get Started for Free
         </Link>
       </div>
-    </section>
+    </div>
   );
 };
 
